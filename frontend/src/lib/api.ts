@@ -77,6 +77,13 @@ export interface Credential {
   created_at: string;
 }
 
+export const mcpApi = {
+  listTools: (slug: string) =>
+    api.get(`/mcp/${slug}`).then((r) => r.data),
+  callTool: (slug: string, tool: string, input: Record<string, unknown>) =>
+    api.post(`/mcp/${slug}/tools/call`, { tool, input }).then((r) => r.data),
+};
+
 export const credentialsApi = {
   list: () => api.get<Credential[]>("/api/credentials").then((r) => r.data),
   create: (data: { name: string; type: string; data: Record<string, string> }) =>

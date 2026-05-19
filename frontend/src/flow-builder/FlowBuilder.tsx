@@ -4,7 +4,8 @@ import { flowsApi, type Flow, type Project } from "@/lib/api";
 import { FlowCanvas } from "./FlowCanvas";
 import { NodePalette } from "./NodePalette";
 import { CreateFlowDialog } from "./CreateFlowDialog";
-import { ChevronLeft, Save, Plus, Check } from "lucide-react";
+import { TestPanel } from "./TestPanel";
+import { ChevronLeft, Save, Plus, Check, Play } from "lucide-react";
 
 interface Props {
   project: Project;
@@ -18,13 +19,13 @@ export function FlowBuilder({ project, onBack }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [testOpen, setTestOpen] = useState(false);
 
   const { data: flows = [] } = useQuery({
     queryKey: ["flows", project.id],
     queryFn: () => flowsApi.list(project.id),
   });
 
-  // Auto-select first flow on load
   useEffect(() => {
     if (flows.length > 0 && !selectedFlowId) {
       setSelectedFlowId(flows[0].id);
@@ -63,7 +64,6 @@ export function FlowBuilder({ project, onBack }: Props) {
 
         <span className="text-zinc-700">/</span>
 
-        {/* Flow selector */}
         {flows.length > 0 ? (
           <select
             value={selectedFlowId ?? ""}
@@ -81,6 +81,20 @@ export function FlowBuilder({ project, onBack }: Props) {
         )}
 
         <div className="flex-1" />
+
+        {selectedFlow && (
+          <button
+            onClick={() => setTestOpen((v) => !v)}
+            className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1 transition shrink-0 ${
+              testOpen
+                ? "bg-zinc-800 border-zinc-600 text-zinc-100"
+                : "border-zinc-700 text-zinc-400 hover:text-zinc-100"
+            }`}
+          >
+            <Play size={12} />
+            Test
+          </button>
+        )}
 
         <button
           onClick={() => setCreateOpen(true)}
@@ -121,6 +135,14 @@ export function FlowBuilder({ project, onBack }: Props) {
               Create your first flow
             </button>
           </div>
+        )}
+
+        {testOpen && selectedFlow && (
+          <TestPanel
+            project={project}
+            flow={selectedFlow}
+            onClose={() => setTestOpen(false)}
+          />
         )}
       </div>
 
