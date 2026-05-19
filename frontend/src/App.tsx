@@ -4,10 +4,11 @@ import { setupApi, type Project, type SetupStatus } from "@/lib/api";
 import { SetupWizard } from "@/components/setup/SetupWizard";
 import { LoginPage } from "@/components/LoginPage";
 import { Dashboard } from "@/dashboard/Dashboard";
+import { FlowBuilder } from "@/flow-builder/FlowBuilder";
 
 const queryClient = new QueryClient();
 
-type AppState = "loading" | "setup" | "login" | "dashboard";
+type AppState = "loading" | "setup" | "login" | "dashboard" | "builder";
 
 function AppRoutes() {
   const [state, setState] = useState<AppState>("loading");
@@ -44,15 +45,25 @@ function AppRoutes() {
     return <LoginPage onLogin={() => setState("dashboard")} />;
   }
 
-  // dashboard
-  void activeProject; // will be used by flow builder in next step
+  if (state === "builder" && activeProject) {
+    return (
+      <FlowBuilder
+        project={activeProject}
+        onBack={() => setState("dashboard")}
+      />
+    );
+  }
+
   return (
     <Dashboard
       onLogout={() => {
         setActiveProject(null);
         setState("login");
       }}
-      onOpenProject={(project) => setActiveProject(project)}
+      onOpenProject={(project) => {
+        setActiveProject(project);
+        setState("builder");
+      }}
     />
   );
 }
