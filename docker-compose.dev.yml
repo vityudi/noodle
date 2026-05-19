@@ -22,7 +22,13 @@ services:
     volumes:
       - ./backend:/app
     env_file:
-      - .env
+      - path: .env
+        required: false
+    environment:
+      - PORT=${PORT:-8080}
+      - DATABASE_URL=${DATABASE_URL:-postgres://noodle:noodle@postgres:5432/noodle?sslmode=disable}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       postgres:
         condition: service_healthy
