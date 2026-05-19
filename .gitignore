@@ -1,0 +1,30 @@
+# Environment
+.env
+.env.local
+
+# Go
+backend/bin/
+backend/tmp/
+*.exe
+*.test
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Docker volumes
+postgres_data/
+redis_data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Claude
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
