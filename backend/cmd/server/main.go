@@ -28,7 +28,10 @@ func main() {
 	}
 	defer pool.Close()
 
-	router := api.NewRouter(pool)
+	if cfg.DevMode {
+		log.Println("⚠️  DEV_MODE enabled — /api/dev/auto-login is active")
+	}
+	router := api.NewRouter(pool, cfg.DevMode)
 
 	log.Printf("noodle listening on :%s", cfg.Port)
 	if err := http.ListenAndServe(":"+cfg.Port, router); err != nil {

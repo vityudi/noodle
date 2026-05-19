@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { setupApi, type Project, type SetupStatus } from "@/lib/api";
+import { api, setupApi, type Project, type SetupStatus } from "@/lib/api";
 import { SetupWizard } from "@/components/setup/SetupWizard";
 import { LoginPage } from "@/components/LoginPage";
 import { Dashboard } from "@/dashboard/Dashboard";
@@ -15,6 +15,19 @@ function AppRoutes() {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
 
   useEffect(() => {
+    const devMode = import.meta.env.VITE_DEV_MODE === "true";
+
+    if (devMode) {
+      api
+        .post<{ token: string }>("/api/dev/auto-login")
+        .then((r) => {
+          localStorage.setItem("token", r.data.token);
+          setState("dashboard");
+        })
+        .catch(() => setState("loading"));
+      return;
+    }
+
     setupApi
       .status()
       .then((status: SetupStatus) => {

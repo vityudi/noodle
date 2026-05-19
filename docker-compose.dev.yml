@@ -10,6 +10,7 @@ services:
       - /app/node_modules
     environment:
       - VITE_API_URL=http://localhost:8080
+      - VITE_DEV_MODE=true
     depends_on:
       - backend
 
@@ -29,6 +30,7 @@ services:
       - DATABASE_URL=${DATABASE_URL:-postgres://noodle:noodle@postgres:5432/noodle?sslmode=disable}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DEV_MODE=true
     depends_on:
       postgres:
         condition: service_healthy

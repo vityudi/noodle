@@ -10,7 +10,7 @@ import (
 	"github.com/vityudi/noodle/backend/internal/mcp/transport"
 )
 
-func NewRouter(db *pgxpool.Pool) http.Handler {
+func NewRouter(db *pgxpool.Pool, devMode bool) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
@@ -30,6 +30,10 @@ func NewRouter(db *pgxpool.Pool) http.Handler {
 		r.Post("/ai", setup.configureAI)
 		r.Post("/skip-ai", setup.skipAI)
 	})
+
+	if devMode {
+		r.Post("/api/dev/auto-login", setup.devAutoLogin)
+	}
 
 	auth := &authHandler{db: db}
 	r.Post("/api/auth/login", auth.login)

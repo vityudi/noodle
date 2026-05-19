@@ -7,6 +7,7 @@ type Config struct {
 	DatabaseURL string
 	RedisURL    string
 	LogLevel    string
+	DevMode     bool
 }
 
 func Load() Config {
@@ -15,6 +16,7 @@ func Load() Config {
 		DatabaseURL: getEnv("DATABASE_URL", "postgres://noodle:noodle@postgres:5432/noodle?sslmode=disable"),
 		RedisURL:    getEnv("REDIS_URL", "redis://redis:6379"),
 		LogLevel:    getEnv("LOG_LEVEL", "info"),
+		DevMode:     os.Getenv("DEV_MODE") == "true",
 	}
 }
 
