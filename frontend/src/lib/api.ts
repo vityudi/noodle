@@ -69,6 +69,23 @@ export interface Flow {
   updated_at: string;
 }
 
+export interface Credential {
+  id: string;
+  workspace_id: string;
+  name: string;
+  type: string;
+  created_at: string;
+}
+
+export const credentialsApi = {
+  list: () => api.get<Credential[]>("/api/credentials").then((r) => r.data),
+  create: (data: { name: string; type: string; data: Record<string, string> }) =>
+    api.post<Credential>("/api/credentials", data).then((r) => r.data),
+  delete: (id: string) => api.delete(`/api/credentials/${id}`),
+  reveal: (id: string) =>
+    api.get<{ data: Record<string, string> }>(`/api/credentials/${id}/reveal`).then((r) => r.data),
+};
+
 export const flowsApi = {
   list: (projectId: string) =>
     api.get<Flow[]>(`/api/projects/${projectId}/flows`).then((r) => r.data),

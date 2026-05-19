@@ -58,6 +58,14 @@ func NewRouter(db *pgxpool.Pool, devMode bool) http.Handler {
 			r.Put("/{flowID}", flows.update)
 			r.Delete("/{flowID}", flows.delete)
 		})
+
+		creds := &credentialsHandler{db: db}
+		r.Route("/api/credentials", func(r chi.Router) {
+			r.Get("/", creds.list)
+			r.Post("/", creds.create)
+			r.Delete("/{credID}", creds.delete)
+			r.Get("/{credID}/reveal", creds.reveal)
+		})
 	})
 
 	// MCP endpoints — public (no JWT required), accessed by external agents.
