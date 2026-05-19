@@ -1,15 +1,30 @@
 import { useEffect, useState } from "react";
-import { setupApi, type SetupStatus } from "@/lib/api";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { setupApi, type Project, type SetupStatus } from "@/lib/api";
 import { SetupWizard } from "@/components/setup/SetupWizard";
+import { LoginPage } from "@/components/LoginPage";
+import { Dashboard } from "@/dashboard/Dashboard";
 
-type AppState = "loading" | "setup" | "ready";
+const queryClient = new QueryClient();
 
-export default function App() {
+type AppState = "loading" | "setup" | "login" | "dashboard";
+
+function AppRoutes() {
   const [state, setState] = useState<AppState>("loading");
+  const [activeProject, setActiveProject] = useState<Project | null>(null);
 
   useEffect(() => {
-    setupApi.status()
-      .then((status: SetupStatus) => setState(status.complete ? "ready" : "setup"))
+    setupApi
+      .status()
+      .then((status: SetupStatus) => {
+        if (!status.complete) {
+          setState("setup");
+        } else if (localStorage.getItem("token")) {
+          setState("dashboard");
+        } else {
+          setState("login");
+        }
+      })
       .catch(() => setState("setup"));
   }, []);
 
@@ -22,15 +37,30 @@ export default function App() {
   }
 
   if (state === "setup") {
-    return <SetupWizard onComplete={() => setState("ready")} />;
+    return <SetupWizard onComplete={() => setState("dashboard")} />;
   }
 
+  if (state === "login") {
+    return <LoginPage onLogin={() => setState("dashboard")} />;
+  }
+
+  // dashboard
+  void activeProject; // will be used by flow builder in next step
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight">🍜 Noodle</h1>
-        <p className="mt-3 text-zinc-400">Visual MCP server builder</p>
-      </div>
-    </div>
+    <Dashboard
+      onLogout={() => {
+        setActiveProject(null);
+        setState("login");
+      }}
+      onOpenProject={(project) => setActiveProject(project)}
+    />
+  );
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppRoutes />
+    </QueryClientProvider>
   );
 }

@@ -30,5 +30,30 @@ func NewRouter(db *pgxpool.Pool) http.Handler {
 		r.Post("/skip-ai", setup.skipAI)
 	})
 
+	auth := &authHandler{db: db}
+	r.Post("/api/auth/login", auth.login)
+
+	r.Group(func(r chi.Router) {
+		r.Use(jwtMiddleware(db))
+
+		projects := &projectsHandler{db: db}
+		r.Route("/api/projects", func(r chi.Router) {
+			r.Get("/", projects.list)
+			r.Post("/", projects.create)
+			r.Get("/{projectID}", projects.get)
+			r.Put("/{projectID}", projects.update)
+			r.Delete("/{projectID}", projects.delete)
+		})
+
+		flows := &flowsHandler{db: db}
+		r.Route("/api/projects/{projectID}/flows", func(r chi.Router) {
+			r.Get("/", flows.list)
+			r.Post("/", flows.create)
+			r.Get("/{flowID}", flows.get)
+			r.Put("/{flowID}", flows.update)
+			r.Delete("/{flowID}", flows.delete)
+		})
+	})
+
 	return r
 }
