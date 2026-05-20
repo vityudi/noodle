@@ -19,6 +19,7 @@ type Project struct {
 	Name        string    `json:"name"`
 	Slug        string    `json:"slug"`
 	Description string    `json:"description,omitempty"`
+	ReadOnly    bool      `json:"read_only"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
@@ -37,7 +38,7 @@ func (h *projectsHandler) list(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := h.db.Query(r.Context(),
-		`SELECT id, workspace_id, name, slug, COALESCE(description,''), created_at FROM mcp_projects WHERE workspace_id = $1 ORDER BY created_at DESC`,
+		`SELECT id, workspace_id, name, slug, COALESCE(description,''), read_only, created_at FROM mcp_projects WHERE workspace_id = $1 ORDER BY created_at DESC`,
 		wsID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "db error")
@@ -48,7 +49,7 @@ func (h *projectsHandler) list(w http.ResponseWriter, r *http.Request) {
 	projects := []Project{}
 	for rows.Next() {
 		var p Project
-		if err := rows.Scan(&p.ID, &p.WorkspaceID, &p.Name, &p.Slug, &p.Description, &p.CreatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.WorkspaceID, &p.Name, &p.Slug, &p.Description, &p.ReadOnly, &p.CreatedAt); err != nil {
 			continue
 		}
 		projects = append(projects, p)
@@ -60,6 +61,7 @@ type projectRequest struct {
 	Name        string `json:"name"`
 	Slug        string `json:"slug"`
 	Description string `json:"description"`
+	ReadOnly    *bool  `json:"read_only,omitempty"`
 }
 
 func (h *projectsHandler) create(w http.ResponseWriter, r *http.Request) {
@@ -79,9 +81,9 @@ func (h *projectsHandler) create(w http.ResponseWriter, r *http.Request) {
 
 	var p Project
 	err = h.db.QueryRow(r.Context(),
-		`INSERT INTO mcp_projects (workspace_id, name, slug, description) VALUES ($1, $2, $3, $4) RETURNING id, workspace_id, name, slug, COALESCE(description,''), created_at`,
+		`INSERT INTO mcp_projects (workspace_id, name, slug, description) VALUES ($1, $2, $3, $4) RETURNING id, workspace_id, name, slug, COALESCE(description,''), read_only, created_at`,
 		wsID, req.Name, req.Slug, req.Description,
-	).Scan(&p.ID, &p.WorkspaceID, &p.Name, &p.Slug, &p.Description, &p.CreatedAt)
+	).Scan(&p.ID, &p.WorkspaceID, &p.Name, &p.Slug, &p.Description, &p.ReadOnly, &p.CreatedAt)
 	if err != nil {
 		writeError(w, http.StatusConflict, "slug already taken")
 		return
@@ -100,9 +102,9 @@ func (h *projectsHandler) get(w http.ResponseWriter, r *http.Request) {
 
 	var p Project
 	err = h.db.QueryRow(r.Context(),
-		`SELECT id, workspace_id, name, slug, COALESCE(description,''), created_at FROM mcp_projects WHERE id = $1 AND workspace_id = $2`,
+		`SELECT id, workspace_id, name, slug, COALESCE(description,''), read_only, created_at FROM mcp_projects WHERE id = $1 AND workspace_id = $2`,
 		projectID, wsID,
-	).Scan(&p.ID, &p.WorkspaceID, &p.Name, &p.Slug, &p.Description, &p.CreatedAt)
+	).Scan(&p.ID, &p.WorkspaceID, &p.Name, &p.Slug, &p.Description, &p.ReadOnly, &p.CreatedAt)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "project not found")
 		return
@@ -127,9 +129,14 @@ func (h *projectsHandler) update(w http.ResponseWriter, r *http.Request) {
 
 	var p Project
 	err = h.db.QueryRow(r.Context(),
-		`UPDATE mcp_projects SET name = COALESCE(NULLIF($1,''), name), description = $2 WHERE id = $3 AND workspace_id = $4 RETURNING id, workspace_id, name, slug, COALESCE(description,''), created_at`,
-		req.Name, req.Description, projectID, wsID,
-	).Scan(&p.ID, &p.WorkspaceID, &p.Name, &p.Slug, &p.Description, &p.CreatedAt)
+		`UPDATE mcp_projects
+		 SET name = COALESCE(NULLIF($1,''), name),
+		     description = $2,
+		     read_only = COALESCE($3, read_only)
+		 WHERE id = $4 AND workspace_id = $5
+		 RETURNING id, workspace_id, name, slug, COALESCE(description,''), read_only, created_at`,
+		req.Name, req.Description, req.ReadOnly, projectID, wsID,
+	).Scan(&p.ID, &p.WorkspaceID, &p.Name, &p.Slug, &p.Description, &p.ReadOnly, &p.CreatedAt)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "project not found")
 		return

@@ -20,6 +20,7 @@ CREATE TABLE mcp_projects (
     name         TEXT NOT NULL,
     slug         TEXT NOT NULL,
     description  TEXT,
+    read_only    BOOLEAN NOT NULL DEFAULT FALSE,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (workspace_id, slug)
 );

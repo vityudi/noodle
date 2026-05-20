@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/vityudi/noodle/backend/internal/mcp/runtime"
 )
 
 // HTTPRequestNode performs an HTTP request.
@@ -33,6 +35,9 @@ func (n *HTTPRequestNode) Execute(ctx context.Context, config map[string]interfa
 	}
 
 	method := strings.ToUpper(stringOr(config["method"], "GET"))
+	if method != "GET" && runtime.IsReadOnly(ctx) {
+		return nil, fmt.Errorf("project is read-only: only GET requests are allowed (got %s)", method)
+	}
 
 	// Query params.
 	if params, ok := config["params"].(map[string]interface{}); ok && len(params) > 0 {

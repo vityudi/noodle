@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  flowsApi, credentialsApi, envApi, openAPIApi, templatesApi,
+  flowsApi, credentialsApi, envApi, openAPIApi, templatesApi, projectsApi,
   type Flow, type Project, type Credential, type EnvVariable, type SuggestedFlow, type FlowTemplate,
 } from "@/lib/api";
 import {
   ChevronLeft, Plus, ArrowRight, KeyRound,
   SlidersHorizontal, Download, Trash2, Eye, EyeOff, Key, Lock,
-  Check, AlertCircle, Code2, Layers, ChevronDown, Link2,
+  Check, AlertCircle, Code2, Layers, ChevronDown, Link2, ShieldCheck, ShieldOff,
 } from "lucide-react";
 import { TemplateWizard } from "./TemplateWizard";
 import { ConnectModal } from "./ConnectModal";
@@ -922,6 +922,16 @@ const TABS: Array<{ id: ProjectTab; label: string; icon: React.ElementType }> = 
 
 export function ProjectPage({ project, tab, onTabChange, onBack, onOpenBuilder }: Props) {
   const [connectOpen, setConnectOpen] = useState(false);
+  const [readOnly, setReadOnly] = useState(project.read_only);
+  const qc = useQueryClient();
+
+  const toggleReadOnly = useMutation({
+    mutationFn: (val: boolean) => projectsApi.update(project.id, { read_only: val }),
+    onSuccess: (updated) => {
+      setReadOnly(updated.read_only);
+      qc.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
 
   return (
     <div className="flex-1 flex flex-col bg-zinc-950 text-zinc-100 overflow-hidden">
@@ -939,7 +949,20 @@ export function ProjectPage({ project, tab, onTabChange, onBack, onOpenBuilder }
         {project.description && (
           <span className="text-xs text-zinc-600 truncate max-w-xs">— {project.description}</span>
         )}
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => toggleReadOnly.mutate(!readOnly)}
+            disabled={toggleReadOnly.isPending}
+            title={readOnly ? "Read-only mode ON — click to allow writes" : "Click to enable read-only mode"}
+            className={`flex items-center gap-1.5 text-xs border rounded-lg px-3 py-1.5 transition disabled:opacity-50 ${
+              readOnly
+                ? "border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                : "border-zinc-700 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+            }`}
+          >
+            {readOnly ? <ShieldCheck size={12} /> : <ShieldOff size={12} />}
+            {readOnly ? "Read-only" : "Read-only"}
+          </button>
           <button
             onClick={() => setConnectOpen(true)}
             className="flex items-center gap-1.5 text-xs border border-zinc-700 text-zinc-400 rounded-lg px-3 py-1.5 hover:bg-zinc-800 hover:text-zinc-100 transition"

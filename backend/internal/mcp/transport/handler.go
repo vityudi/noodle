@@ -46,15 +46,16 @@ type ToolDef struct {
 }
 
 type projectMeta struct {
-	id   string
-	name string
+	id       string
+	name     string
+	readOnly bool
 }
 
 func (h *Handler) projectBySlug(ctx context.Context, slug string) (*projectMeta, error) {
 	var p projectMeta
 	err := h.db.QueryRow(ctx,
-		`SELECT id, name FROM mcp_projects WHERE slug = $1`, slug,
-	).Scan(&p.id, &p.name)
+		`SELECT id, name, read_only FROM mcp_projects WHERE slug = $1`, slug,
+	).Scan(&p.id, &p.name, &p.readOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +209,7 @@ func (h *Handler) callTool(w http.ResponseWriter, r *http.Request) {
 	}
 
 	start := time.Now()
-	result, execErr := runtime.Run(r.Context(), &def, input, creds, envVars)
+	result, execErr := runtime.Run(r.Context(), &def, input, creds, envVars, proj.readOnly)
 	durationMS := int(time.Since(start).Milliseconds())
 
 	// Persist execution log.
@@ -329,7 +330,7 @@ func (h *Handler) readResource(w http.ResponseWriter, r *http.Request) {
 	envVars, _ := credentials.LoadEnvVars(r.Context(), h.db, proj.id)
 
 	start := time.Now()
-	result, execErr := runtime.Run(r.Context(), &def, map[string]interface{}{}, creds, envVars)
+	result, execErr := runtime.Run(r.Context(), &def, map[string]interface{}{}, creds, envVars, proj.readOnly)
 	durationMS := int(time.Since(start).Milliseconds())
 	go h.logExecution(matched.id, map[string]interface{}{"uri": req.URI}, result, execErr, durationMS)
 

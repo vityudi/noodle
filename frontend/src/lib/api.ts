@@ -47,6 +47,7 @@ export interface Project {
   name: string;
   slug: string;
   description: string;
+  read_only: boolean;
   created_at: string;
 }
 
@@ -54,7 +55,7 @@ export const projectsApi = {
   list: () => api.get<Project[]>("/api/projects").then((r) => r.data),
   create: (data: { name: string; slug: string; description?: string }) =>
     api.post<Project>("/api/projects", data).then((r) => r.data),
-  update: (id: string, data: { name?: string; description?: string }) =>
+  update: (id: string, data: { name?: string; description?: string; read_only?: boolean }) =>
     api.put<Project>(`/api/projects/${id}`, data).then((r) => r.data),
   delete: (id: string) => api.delete(`/api/projects/${id}`),
 };

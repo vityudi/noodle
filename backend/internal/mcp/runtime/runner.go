@@ -11,7 +11,11 @@ import (
 // Run executes a FlowDef with the given input and returns the resolved output.
 // credentials is a map of credential name → decrypted data fields ({{credentials.name.field}}).
 // envVars is a map of project-level env variable key → plaintext value ({{env.KEY}}).
-func Run(ctx context.Context, flow *mcp.FlowDef, input map[string]interface{}, credentials map[string]map[string]interface{}, envVars map[string]string) (interface{}, error) {
+// readOnly blocks any write operations (INSERT/UPDATE/DELETE for DB, non-GET for HTTP).
+func Run(ctx context.Context, flow *mcp.FlowDef, input map[string]interface{}, credentials map[string]map[string]interface{}, envVars map[string]string, readOnly bool) (interface{}, error) {
+	if readOnly {
+		ctx = WithReadOnly(ctx)
+	}
 	order, err := topoSort(flow)
 	if err != nil {
 		return nil, err

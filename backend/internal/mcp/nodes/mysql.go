@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/vityudi/noodle/backend/internal/mcp/runtime"
 )
 
 // MySQLNode executes a SQL query against a MySQL / MariaDB database.
@@ -46,6 +47,9 @@ func (n *MySQLNode) Execute(ctx context.Context, config map[string]interface{}) 
 	defer db.Close()
 
 	if !isReadQuery(query) {
+		if runtime.IsReadOnly(ctx) {
+			return nil, fmt.Errorf("project is read-only: write queries (INSERT, UPDATE, DELETE) are not allowed")
+		}
 		result, err := db.ExecContext(ctx, query, params...)
 		if err != nil {
 			return nil, fmt.Errorf("mysql: exec: %w", err)

@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/vityudi/noodle/backend/internal/mcp/runtime"
 )
 
 // MongoDBNode runs an operation against a MongoDB collection.
@@ -55,6 +56,11 @@ func (n *MongoDBNode) Execute(ctx context.Context, config map[string]interface{}
 	coll := client.Database(database).Collection(collection)
 
 	filter := toBSON(config["filter"])
+
+	writeOps := map[string]bool{"insertOne": true, "insertMany": true, "updateOne": true, "updateMany": true, "deleteOne": true, "deleteMany": true}
+	if writeOps[operation] && runtime.IsReadOnly(ctx) {
+		return nil, fmt.Errorf("project is read-only: write operations (%s) are not allowed", operation)
+	}
 
 	switch operation {
 	case "find":

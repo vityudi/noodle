@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/vityudi/noodle/backend/internal/mcp/runtime"
 )
 
 // PostgreSQLNode executes a SQL query against a PostgreSQL database.
@@ -54,6 +55,9 @@ func (n *PostgreSQLNode) Execute(ctx context.Context, config map[string]interfac
 	defer conn.Close(ctx)
 
 	if !isReadQuery(query) {
+		if runtime.IsReadOnly(ctx) {
+			return nil, fmt.Errorf("project is read-only: write queries (INSERT, UPDATE, DELETE) are not allowed")
+		}
 		tag, err := conn.Exec(ctx, query, params...)
 		if err != nil {
 			return nil, fmt.Errorf("postgres: exec: %w", err)
