@@ -6,6 +6,7 @@ import { CreateProjectDialog } from "./CreateProjectDialog";
 import { SchemaPage } from "./SchemaPage";
 import { LogsPage } from "./LogsPage";
 import { SettingsPage } from "./SettingsPage";
+import { TemplatesPage } from "./TemplatesPage";
 import { type SidebarPage } from "./Sidebar";
 import { Plus } from "lucide-react";
 
@@ -15,10 +16,11 @@ interface Props {
 }
 
 const PAGE_META: Record<SidebarPage, { title: string; subtitle: string }> = {
-  projects: { title: "Projects",       subtitle: "Each project exposes a set of tools via an MCP endpoint." },
-  logs:     { title: "Execution Logs", subtitle: "Last 100 tool executions per project." },
-  schema:   { title: "Flow Schema",    subtitle: "Public JSON Schema spec for the Noodle flow format." },
-  settings: { title: "Settings",       subtitle: "Configure the AI assistant and other instance settings." },
+  projects:  { title: "Projects",       subtitle: "Each project exposes a set of tools via an MCP endpoint." },
+  templates: { title: "Templates",      subtitle: "Ready-made flows you can use as a starting point." },
+  logs:      { title: "Execution Logs", subtitle: "Last 100 tool executions per project." },
+  schema:    { title: "Flow Schema",    subtitle: "Public JSON Schema spec for the Noodle flow format." },
+  settings:  { title: "Settings",       subtitle: "Configure the AI assistant and other instance settings." },
 };
 
 export function Dashboard({ page, onOpenProject }: Props) {
@@ -96,9 +98,10 @@ export function Dashboard({ page, onOpenProject }: Props) {
             </>
           )}
 
-          {page === "logs"     && <LogsPage />}
-          {page === "schema"   && <SchemaPage />}
-          {page === "settings" && <SettingsPage />}
+          {page === "templates" && <TemplatesPage />}
+          {page === "logs"      && <LogsPage />}
+          {page === "schema"    && <SchemaPage />}
+          {page === "settings"  && <SettingsPage />}
         </div>
       </main>
     </div>

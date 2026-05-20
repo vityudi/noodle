@@ -30,27 +30,32 @@ interface Props {
 // --- Schema conversion helpers ---
 
 const RF_TO_NOODLE: Record<string, string> = {
-  httpRequest: "http_request",
+  httpRequest:   "http_request",
   jsonTransform: "json_transform",
-  condition: "condition",
-  trigger: "trigger",
+  condition:     "condition",
+  trigger:       "trigger",
+  variable:      "variable",
+  loop:          "loop",
+  merge:         "merge",
 };
 
 const NOODLE_TO_RF: Record<string, string> = {
-  http_request: "httpRequest",
+  http_request:   "httpRequest",
   json_transform: "jsonTransform",
-  condition: "condition",
-  trigger: "trigger",
+  condition:      "condition",
+  trigger:        "trigger",
+  variable:       "variable",
+  loop:           "loop",
+  merge:          "merge",
 };
 
 const DEFAULT_OUTPUTS: Record<string, Record<string, { type: string }>> = {
-  http_request: {
-    status: { type: "number" },
-    body: { type: "any" },
-    headers: { type: "object" },
-  },
+  http_request:   { status: { type: "number" }, body: { type: "any" }, headers: { type: "object" } },
   json_transform: { result: { type: "object" } },
-  condition: { result: { type: "boolean" } },
+  condition:      { result: { type: "boolean" } },
+  variable:       { value: { type: "any" } },
+  loop:           { items: { type: "array" }, count: { type: "number" } },
+  merge:          { result: { type: "object" } },
 };
 
 interface NoodleSchema {

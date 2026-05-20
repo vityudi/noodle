@@ -9,10 +9,13 @@ interface Props {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  trigger: "Trigger",
-  httpRequest: "HTTP Request",
+  trigger:       "Trigger",
+  httpRequest:   "HTTP Request",
   jsonTransform: "JSON Transform",
-  condition: "Condition",
+  condition:     "Condition",
+  variable:      "Variable",
+  loop:          "Loop",
+  merge:         "Merge",
 };
 
 export function NodePropertiesPanel({ node, onUpdate, onClose }: Props) {
@@ -93,8 +96,8 @@ export function NodePropertiesPanel({ node, onUpdate, onClose }: Props) {
           {[
             "{{input.field}}",
             "{{nodes.id.outputs.field}}",
-            "{{env.VAR}}",
-            "{{credentials.name}}",
+            "{{env.VAR_NAME}}",
+            "{{credentials.name.field}}",
           ].map((ref) => (
             <code key={ref} className="block text-xs text-zinc-400 font-mono">{ref}</code>
           ))}

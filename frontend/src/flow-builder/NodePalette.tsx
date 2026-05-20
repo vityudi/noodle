@@ -1,4 +1,4 @@
-import { Globe, Braces, GitBranch, Zap } from "lucide-react";
+import { Globe, Braces, GitBranch, Zap, Box, Repeat, Combine } from "lucide-react";
 
 const NODES = [
   {
@@ -28,6 +28,27 @@ const NODES = [
     icon: GitBranch,
     color: "text-green-400",
     description: "If / else branching",
+  },
+  {
+    type: "variable",
+    label: "Variable",
+    icon: Box,
+    color: "text-indigo-400",
+    description: "Store a value",
+  },
+  {
+    type: "loop",
+    label: "Loop",
+    icon: Repeat,
+    color: "text-cyan-400",
+    description: "Iterate over an array",
+  },
+  {
+    type: "merge",
+    label: "Merge",
+    icon: Combine,
+    color: "text-rose-400",
+    description: "Join multiple values",
   },
 ];
 

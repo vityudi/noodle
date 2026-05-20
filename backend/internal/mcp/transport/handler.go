@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/vityudi/noodle/backend/internal/credentials"
 	"github.com/vityudi/noodle/backend/internal/mcp"
 	"github.com/vityudi/noodle/backend/internal/mcp/runtime"
 )
@@ -156,8 +157,15 @@ func (h *Handler) callTool(w http.ResponseWriter, r *http.Request) {
 		input = map[string]interface{}{}
 	}
 
+	// Load project credentials so flows can use {{credentials.name.field}}.
+	creds, err := credentials.LoadDecrypted(r.Context(), h.db, proj.id)
+	if err != nil {
+		// Non-fatal: proceed without credentials — runtime will leave unresolved refs as-is.
+		creds = nil
+	}
+
 	start := time.Now()
-	result, execErr := runtime.Run(r.Context(), &def, input)
+	result, execErr := runtime.Run(r.Context(), &def, input, creds)
 	durationMS := int(time.Since(start).Milliseconds())
 
 	// Persist execution log.

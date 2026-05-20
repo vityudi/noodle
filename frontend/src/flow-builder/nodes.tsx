@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
-import { Globe, Braces, GitBranch, Zap, Trash2 } from "lucide-react";
+import { Globe, Braces, GitBranch, Zap, Trash2, Box, Repeat, Combine } from "lucide-react";
 
 function DeleteButton({ id }: { id: string }) {
   const { deleteElements } = useReactFlow();
@@ -189,20 +189,85 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
 });
 ConditionNode.displayName = "ConditionNode";
 
+// ── variable ───────────────────────────────────────────────────────────────
+export const VariableNode = memo(({ id, data, selected }: NodeProps) => {
+  const d = data as { label?: string; config?: { value?: unknown } };
+  const val = d.config?.value;
+  const preview = val !== undefined && val !== "" ? String(val) : "No value set";
+  return (
+    <NodeCard
+      id={id}
+      accent="bg-indigo-500/15" iconColor="text-indigo-400"
+      icon={<Box size={13} />}
+      label={d.label ?? "Variable"}
+      selected={!!selected} ring="border-indigo-500/50 shadow-indigo-900/20"
+    >
+      <span className="font-mono truncate text-zinc-500 block max-w-[170px]">{preview}</span>
+    </NodeCard>
+  );
+});
+VariableNode.displayName = "VariableNode";
+
+// ── loop ───────────────────────────────────────────────────────────────────
+export const LoopNode = memo(({ id, data, selected }: NodeProps) => {
+  const d = data as { label?: string; config?: { items?: unknown; field?: string } };
+  const field = d.config?.field;
+  return (
+    <NodeCard
+      id={id}
+      accent="bg-cyan-500/15" iconColor="text-cyan-400"
+      icon={<Repeat size={13} />}
+      label={d.label ?? "Loop"}
+      selected={!!selected} ring="border-cyan-500/50 shadow-cyan-900/20"
+    >
+      <span className="text-zinc-500">
+        {field ? `Extract "${field}" from each item` : "Iterate over array"}
+      </span>
+    </NodeCard>
+  );
+});
+LoopNode.displayName = "LoopNode";
+
+// ── merge ──────────────────────────────────────────────────────────────────
+export const MergeNode = memo(({ id, data, selected }: NodeProps) => {
+  const d = data as { label?: string; config?: Record<string, unknown> };
+  const keys = Object.keys(d.config ?? {});
+  return (
+    <NodeCard
+      id={id}
+      accent="bg-rose-500/15" iconColor="text-rose-400"
+      icon={<Combine size={13} />}
+      label={d.label ?? "Merge"}
+      selected={!!selected} ring="border-rose-500/50 shadow-rose-900/20"
+    >
+      {keys.length > 0
+        ? <span className="text-zinc-500">{keys.length} field{keys.length !== 1 ? "s" : ""} merged</span>
+        : <span className="text-zinc-600 italic">No fields defined</span>}
+    </NodeCard>
+  );
+});
+MergeNode.displayName = "MergeNode";
+
 // ── registry ───────────────────────────────────────────────────────────────
 export const nodeTypes = {
   trigger: TriggerNode,
   httpRequest: HttpRequestNode,
   jsonTransform: JsonTransformNode,
   condition: ConditionNode,
+  variable: VariableNode,
+  loop: LoopNode,
+  merge: MergeNode,
 };
 
 export function defaultNodeData(type: string): Record<string, unknown> {
   switch (type) {
-    case "trigger":      return { label: "Trigger",        config: { description: "" } };
-    case "httpRequest":  return { label: "HTTP Request",   config: { url: "", method: "GET", headers: {} } };
-    case "jsonTransform":return { label: "JSON Transform", config: { mapping: {} } };
-    case "condition":    return { label: "Condition",      config: { left: "", operator: "eq", right: "" } };
-    default:             return { label: type, config: {} };
+    case "trigger":       return { label: "Trigger",        config: { description: "" } };
+    case "httpRequest":   return { label: "HTTP Request",   config: { url: "", method: "GET", headers: {} } };
+    case "jsonTransform": return { label: "JSON Transform", config: { mapping: {} } };
+    case "condition":     return { label: "Condition",      config: { left: "", operator: "eq", right: "" } };
+    case "variable":      return { label: "Variable",       config: { value: "" } };
+    case "loop":          return { label: "Loop",           config: { items: "", field: "" } };
+    case "merge":         return { label: "Merge",          config: {} };
+    default:              return { label: type, config: {} };
   }
 }

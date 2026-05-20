@@ -14,20 +14,20 @@ var templateRe = regexp.MustCompile(`\{\{([^}]+)\}\}`)
 // If val is a string that is exactly one {{expr}}, the typed value is returned.
 // If val is a string with embedded {{expr}}, all references are string-interpolated.
 // If val is a map or slice, it is walked recursively.
-func resolve(val interface{}, input map[string]interface{}, nodeOutputs map[string]map[string]interface{}) interface{} {
+func resolve(val interface{}, input map[string]interface{}, nodeOutputs map[string]map[string]interface{}, credentials map[string]map[string]interface{}) interface{} {
 	switch v := val.(type) {
 	case string:
-		return resolveString(v, input, nodeOutputs)
+		return resolveString(v, input, nodeOutputs, credentials)
 	case map[string]interface{}:
 		out := make(map[string]interface{}, len(v))
 		for k, vv := range v {
-			out[k] = resolve(vv, input, nodeOutputs)
+			out[k] = resolve(vv, input, nodeOutputs, credentials)
 		}
 		return out
 	case []interface{}:
 		out := make([]interface{}, len(v))
 		for i, vv := range v {
-			out[i] = resolve(vv, input, nodeOutputs)
+			out[i] = resolve(vv, input, nodeOutputs, credentials)
 		}
 		return out
 	default:
@@ -35,19 +35,19 @@ func resolve(val interface{}, input map[string]interface{}, nodeOutputs map[stri
 	}
 }
 
-func resolveString(s string, input map[string]interface{}, nodeOutputs map[string]map[string]interface{}) interface{} {
+func resolveString(s string, input map[string]interface{}, nodeOutputs map[string]map[string]interface{}, credentials map[string]map[string]interface{}) interface{} {
 	trimmed := strings.TrimSpace(s)
 	// Whole value is a single expression — return typed value.
 	if strings.HasPrefix(trimmed, "{{") && strings.HasSuffix(trimmed, "}}") && strings.Count(trimmed, "{{") == 1 {
 		expr := trimmed[2 : len(trimmed)-2]
-		if v, ok := evalExpr(expr, input, nodeOutputs); ok {
+		if v, ok := evalExpr(expr, input, nodeOutputs, credentials); ok {
 			return v
 		}
 	}
 	// String interpolation — replace each {{expr}} with its string form.
 	return templateRe.ReplaceAllStringFunc(s, func(match string) string {
 		expr := match[2 : len(match)-2]
-		if v, ok := evalExpr(expr, input, nodeOutputs); ok {
+		if v, ok := evalExpr(expr, input, nodeOutputs, credentials); ok {
 			return fmt.Sprintf("%v", v)
 		}
 		return match
@@ -55,10 +55,12 @@ func resolveString(s string, input map[string]interface{}, nodeOutputs map[strin
 }
 
 // evalExpr evaluates a dot-path expression like:
-//   input.email
-//   nodes.fetch.outputs.body.data.name
-//   env.API_URL
-func evalExpr(expr string, input map[string]interface{}, nodeOutputs map[string]map[string]interface{}) (interface{}, bool) {
+//
+//	input.email
+//	nodes.fetch.outputs.body.data.name
+//	env.API_URL
+//	credentials.my_api.token
+func evalExpr(expr string, input map[string]interface{}, nodeOutputs map[string]map[string]interface{}, credentials map[string]map[string]interface{}) (interface{}, bool) {
 	parts := strings.Split(strings.TrimSpace(expr), ".")
 	if len(parts) == 0 {
 		return nil, false
@@ -83,6 +85,17 @@ func evalExpr(expr string, input map[string]interface{}, nodeOutputs map[string]
 			return nil, false
 		}
 		return dotGet(outputs, parts[3:])
+	case "credentials":
+		// credentials.<name>          → entire credential data object
+		// credentials.<name>.<field>  → specific field
+		if len(parts) < 2 || credentials == nil {
+			return nil, false
+		}
+		cred, ok := credentials[parts[1]]
+		if !ok {
+			return nil, false
+		}
+		return dotGet(cred, parts[2:])
 	}
 	return nil, false
 }

@@ -9,7 +9,9 @@ import (
 )
 
 // Run executes a FlowDef with the given input and returns the resolved output.
-func Run(ctx context.Context, flow *mcp.FlowDef, input map[string]interface{}) (interface{}, error) {
+// credentials is an optional map of credential name → decrypted data fields
+// (used to resolve {{credentials.name.field}} template expressions).
+func Run(ctx context.Context, flow *mcp.FlowDef, input map[string]interface{}, credentials map[string]map[string]interface{}) (interface{}, error) {
 	order, err := topoSort(flow)
 	if err != nil {
 		return nil, err
@@ -28,7 +30,7 @@ func Run(ctx context.Context, flow *mcp.FlowDef, input map[string]interface{}) (
 		// Resolve all config values before passing to the node executor.
 		resolvedConfig := make(map[string]interface{}, len(nodeDef.Config))
 		for k, v := range nodeDef.Config {
-			resolvedConfig[k] = resolve(v, input, nodeOutputs)
+			resolvedConfig[k] = resolve(v, input, nodeOutputs, credentials)
 		}
 
 		handler, ok := nodes.Registry[nodeDef.Type]
@@ -47,7 +49,7 @@ func Run(ctx context.Context, flow *mcp.FlowDef, input map[string]interface{}) (
 	if flow.Output == "" {
 		return nodeOutputs, nil
 	}
-	return resolve(flow.Output, input, nodeOutputs), nil
+	return resolve(flow.Output, input, nodeOutputs, credentials), nil
 }
 
 // topoSort returns node IDs in topological (execution) order via Kahn's algorithm.

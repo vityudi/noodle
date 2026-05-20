@@ -12,4 +12,7 @@ var Registry = map[string]Node{
 	"http_request":   &HTTPRequestNode{},
 	"json_transform": &JSONTransformNode{},
 	"condition":      &ConditionNode{},
+	"variable":       &VariableNode{},
+	"loop":           &LoopNode{},
+	"merge":          &MergeNode{},
 }
