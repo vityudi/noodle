@@ -6,7 +6,8 @@ import { NodePalette } from "./NodePalette";
 import { CreateFlowDialog } from "./CreateFlowDialog";
 import { TestPanel } from "./TestPanel";
 import { CredentialsPanel } from "./CredentialsPanel";
-import { ChevronLeft, Save, Plus, Check, Play, KeyRound } from "lucide-react";
+import { AIPanel } from "./AIPanel";
+import { ChevronLeft, Save, Plus, Check, Play, KeyRound, Sparkles } from "lucide-react";
 
 interface Props {
   project: Project;
@@ -16,12 +17,14 @@ interface Props {
 export function FlowBuilder({ project, onBack }: Props) {
   const queryClient = useQueryClient();
   const saveRef = useRef<() => Promise<void>>(async () => {});
+  const loadRef = useRef<(schema: object) => void>(() => {});
   const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
   const [credsOpen, setCredsOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
 
   const { data: flows = [] } = useQuery({
     queryKey: ["flows", project.id],
@@ -85,7 +88,19 @@ export function FlowBuilder({ project, onBack }: Props) {
         <div className="flex-1" />
 
         <button
-          onClick={() => { setCredsOpen((v) => !v); setTestOpen(false); }}
+          onClick={() => { setAiOpen((v) => !v); setCredsOpen(false); setTestOpen(false); }}
+          className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1 transition shrink-0 ${
+            aiOpen
+              ? "bg-violet-900/60 border-violet-600 text-violet-200"
+              : "border-zinc-700 text-zinc-400 hover:text-zinc-100"
+          }`}
+        >
+          <Sparkles size={12} />
+          AI
+        </button>
+
+        <button
+          onClick={() => { setCredsOpen((v) => !v); setTestOpen(false); setAiOpen(false); }}
           className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1 transition shrink-0 ${
             credsOpen
               ? "bg-zinc-800 border-zinc-600 text-zinc-100"
@@ -98,7 +113,7 @@ export function FlowBuilder({ project, onBack }: Props) {
 
         {selectedFlow && (
           <button
-            onClick={() => { setTestOpen((v) => !v); setCredsOpen(false); }}
+            onClick={() => { setTestOpen((v) => !v); setCredsOpen(false); setAiOpen(false); }}
             className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1 transition shrink-0 ${
               testOpen
                 ? "bg-zinc-800 border-zinc-600 text-zinc-100"
@@ -138,6 +153,7 @@ export function FlowBuilder({ project, onBack }: Props) {
             flow={selectedFlow}
             projectId={project.id}
             saveRef={saveRef}
+            loadRef={loadRef}
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
@@ -149,6 +165,15 @@ export function FlowBuilder({ project, onBack }: Props) {
               Create your first flow
             </button>
           </div>
+        )}
+
+        {aiOpen && (
+          <AIPanel
+            project={project}
+            currentFlow={selectedFlow}
+            onGenerated={(schema) => loadRef.current(schema)}
+            onClose={() => setAiOpen(false)}
+          />
         )}
 
         {credsOpen && (

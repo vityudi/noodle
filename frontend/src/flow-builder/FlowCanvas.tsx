@@ -23,6 +23,7 @@ interface Props {
   flow: Flow;
   projectId: string;
   saveRef: React.MutableRefObject<() => Promise<void>>;
+  loadRef: React.MutableRefObject<(schema: object) => void>;
 }
 
 // --- Schema conversion helpers ---
@@ -161,7 +162,31 @@ function loadInitial(stored: unknown): { nodes: Node[]; edges: Edge[] } {
 
 // --- Component ---
 
-export function FlowCanvas({ flow, projectId, saveRef }: Props) {
+function autoLayout(nodes: Node[], edges: Edge[]): Node[] {
+  // Topological order → assign y positions linearly.
+  const inDegree: Record<string, number> = {};
+  const adj: Record<string, string[]> = {};
+  for (const n of nodes) { inDegree[n.id] = 0; adj[n.id] = []; }
+  for (const e of edges) { adj[e.source].push(e.target); inDegree[e.target]++; }
+
+  const queue = nodes.filter((n) => inDegree[n.id] === 0).map((n) => n.id);
+  const order: string[] = [];
+  while (queue.length) {
+    const cur = queue.shift()!;
+    order.push(cur);
+    for (const next of adj[cur] ?? []) {
+      inDegree[next]--;
+      if (inDegree[next] === 0) queue.push(next);
+    }
+  }
+
+  const posMap: Record<string, { x: number; y: number }> = {};
+  order.forEach((id, i) => { posMap[id] = { x: 250, y: 80 + i * 200 }; });
+
+  return nodes.map((n) => ({ ...n, position: posMap[n.id] ?? n.position }));
+}
+
+export function FlowCanvas({ flow, projectId, saveRef, loadRef }: Props) {
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
@@ -187,6 +212,17 @@ export function FlowCanvas({ flow, projectId, saveRef }: Props) {
       nds.map((n) => (n.id === id ? { ...n, data } : n))
     );
   }
+
+  useEffect(() => {
+    loadRef.current = (schema: object) => {
+      const parsed = schema as NoodleSchema;
+      const { nodes: newNodes, edges: newEdges } = fromNoodleSchema(parsed);
+      const hasPositions = Object.keys(parsed._ui?.positions ?? {}).length > 0;
+      setNodes(hasPositions ? newNodes : autoLayout(newNodes, newEdges));
+      setEdges(newEdges);
+      setSelectedNodeId(null);
+    };
+  }, [loadRef]);
 
   useEffect(() => {
     saveRef.current = async () => {

@@ -116,6 +116,16 @@ export const templatesApi = {
   list: () => api.get<FlowTemplate[]>("/api/templates").then((r) => r.data),
 };
 
+export const aiApi = {
+  generate: (projectId: string, message: string, currentFlow?: object) =>
+    api
+      .post<{ flow: object }>(`/api/projects/${projectId}/ai/generate`, {
+        message,
+        current_flow: currentFlow ?? null,
+      })
+      .then((r) => r.data.flow),
+};
+
 export const mcpApi = {
   listTools: (slug: string) =>
     api.get(`/mcp/${slug}`).then((r) => r.data),
