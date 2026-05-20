@@ -14,7 +14,7 @@ import (
 func setupGuard(db *pgxpool.Pool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.HasPrefix(r.URL.Path, "/api/setup") || strings.HasPrefix(r.URL.Path, "/api/dev") || r.URL.Path == "/health" {
+			if strings.HasPrefix(r.URL.Path, "/api/setup") || strings.HasPrefix(r.URL.Path, "/api/dev") || strings.HasPrefix(r.URL.Path, "/schema") || strings.HasPrefix(r.URL.Path, "/mcp") || r.URL.Path == "/health" {
 				next.ServeHTTP(w, r)
 				return
 			}

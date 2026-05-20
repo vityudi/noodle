@@ -1,0 +1,185 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://noodle.dev/schema/flow/v1",
+  "title": "Noodle Flow",
+  "description": "Schema for a Noodle flow definition (schema_version 1.0). A flow is a directed acyclic graph (DAG) of nodes that together implement a single MCP tool.",
+  "type": "object",
+  "required": ["schema_version", "name", "nodes", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": ["1.0"],
+      "description": "Version of the Noodle flow schema."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique name of the flow within its MCP project. Becomes the MCP tool name."
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of what this flow/tool does. Shown to the agent as the tool description."
+    },
+    "input_schema": {
+      "type": "object",
+      "description": "Declares the input parameters accepted by this flow.",
+      "additionalProperties": {
+        "$ref": "#/definitions/inputField"
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "description": "List of nodes in the flow DAG.",
+      "items": { "$ref": "#/definitions/node" },
+      "minItems": 0
+    },
+    "edges": {
+      "type": "array",
+      "description": "Directed edges that define execution order between nodes.",
+      "items": { "$ref": "#/definitions/edge" }
+    },
+    "output": {
+      "type": "string",
+      "description": "Template expression that resolves to the flow's final output. E.g. '{{nodes.format.outputs.result}}'. If omitted, all node outputs are returned."
+    }
+  },
+  "definitions": {
+    "inputField": {
+      "type": "object",
+      "description": "Declaration of a single input parameter.",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean", "object", "array"],
+          "description": "JSON type of the parameter."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description shown to the agent for this parameter."
+        },
+        "required": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this parameter is required."
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "description": "A single processing unit in the flow.",
+      "required": ["id", "type", "config"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique identifier for this node within the flow. Used in template references: {{nodes.<id>.outputs.<field>}}."
+        },
+        "type": {
+          "type": "string",
+          "description": "Node type. Determines which built-in executor runs this node.",
+          "enum": [
+            "http_request",
+            "json_transform",
+            "condition",
+            "api_key",
+            "basic_auth",
+            "bearer_token",
+            "delay",
+            "log",
+            "variable"
+          ]
+        },
+        "config": {
+          "type": "object",
+          "description": "Node configuration. Values may include template expressions like {{input.field}} or {{nodes.id.outputs.field}}.",
+          "additionalProperties": true
+        },
+        "outputs": {
+          "type": "object",
+          "description": "Declares the outputs this node produces (used for documentation and validation).",
+          "additionalProperties": {
+            "$ref": "#/definitions/outputField"
+          }
+        }
+      }
+    },
+    "outputField": {
+      "type": "object",
+      "description": "Declaration of a single output field from a node.",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean", "object", "array", "any"],
+          "description": "JSON type of the output value."
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "description": "A directed dependency from one node to another.",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "ID of the source node."
+        },
+        "to": {
+          "type": "string",
+          "description": "ID of the target node. The target executes after the source."
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "1.0",
+      "name": "find_customer",
+      "description": "Finds a customer by email and returns their name and plan.",
+      "input_schema": {
+        "email": { "type": "string", "required": true, "description": "Customer email address" }
+      },
+      "nodes": [
+        {
+          "id": "fetch",
+          "type": "http_request",
+          "config": {
+            "url": "{{env.API_URL}}/customers",
+            "method": "GET",
+            "params": { "email": "{{input.email}}" },
+            "headers": { "Authorization": "Bearer {{credentials.my_api}}" }
+          },
+          "outputs": {
+            "status": { "type": "number" },
+            "body": { "type": "any" }
+          }
+        },
+        {
+          "id": "format",
+          "type": "json_transform",
+          "config": {
+            "mapping": {
+              "name": "{{nodes.fetch.outputs.body.data.name}}",
+              "plan": "{{nodes.fetch.outputs.body.data.plan}}"
+            }
+          },
+          "outputs": {
+            "result": { "type": "object" }
+          }
+        }
+      ],
+      "edges": [
+        { "from": "fetch", "to": "format" }
+      ],
+      "output": "{{nodes.format.outputs.result}}"
+    }
+  ]
+}
