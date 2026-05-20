@@ -104,6 +104,18 @@ export const settingsApi = {
     api.put("/api/settings/ai", data).then((r) => r.data),
 };
 
+export interface FlowTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  flow: object;
+}
+
+export const templatesApi = {
+  list: () => api.get<FlowTemplate[]>("/api/templates").then((r) => r.data),
+};
+
 export const mcpApi = {
   listTools: (slug: string) =>
     api.get(`/mcp/${slug}`).then((r) => r.data),
@@ -123,7 +135,7 @@ export const credentialsApi = {
 export const flowsApi = {
   list: (projectId: string) =>
     api.get<Flow[]>(`/api/projects/${projectId}/flows`).then((r) => r.data),
-  create: (projectId: string, data: { name: string; description?: string }) =>
+  create: (projectId: string, data: { name: string; description?: string; flow_json?: object }) =>
     api.post<Flow>(`/api/projects/${projectId}/flows`, data).then((r) => r.data),
   update: (
     projectId: string,

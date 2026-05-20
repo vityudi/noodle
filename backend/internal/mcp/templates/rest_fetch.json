@@ -1,0 +1,27 @@
+{
+  "id": "rest_fetch",
+  "name": "REST API Fetch",
+  "description": "Fetches data from a REST API endpoint and returns the response body.",
+  "category": "HTTP",
+  "flow": {
+    "schema_version": "1.0",
+    "name": "fetch_data",
+    "description": "Fetches data from a REST API endpoint",
+    "input_schema": {
+      "url": { "type": "string", "required": true, "description": "Full URL of the API endpoint" }
+    },
+    "nodes": [
+      {
+        "id": "fetch",
+        "type": "http_request",
+        "config": { "url": "{{input.url}}", "method": "GET" },
+        "outputs": { "status": { "type": "number" }, "body": { "type": "any" } }
+      }
+    ],
+    "edges": [],
+    "output": "{{nodes.fetch.outputs.body}}",
+    "_ui": {
+      "positions": { "fetch": { "x": 250, "y": 150 } }
+    }
+  }
+}

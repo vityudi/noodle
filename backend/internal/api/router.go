@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/vityudi/noodle/backend/internal/mcp/schema"
+	"github.com/vityudi/noodle/backend/internal/mcp/templates"
 	"github.com/vityudi/noodle/backend/internal/mcp/transport"
 )
 
@@ -78,8 +79,9 @@ func NewRouter(db *pgxpool.Pool, devMode bool) http.Handler {
 		})
 	})
 
-	// Public schema endpoint — no auth required.
+	// Public endpoints — no auth required.
 	r.Get("/schema/flow.json", schema.Handler)
+	r.Get("/api/templates", templates.ListHandler)
 
 	// MCP endpoints — public (no JWT required), accessed by external agents.
 	mcpHandler := transport.NewHandler(db)

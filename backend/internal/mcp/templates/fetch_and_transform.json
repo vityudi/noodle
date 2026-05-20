@@ -1,0 +1,41 @@
+{
+  "id": "fetch_and_transform",
+  "name": "Fetch + Transform",
+  "description": "Fetches data from a REST API and remaps specific fields from the response.",
+  "category": "HTTP",
+  "flow": {
+    "schema_version": "1.0",
+    "name": "fetch_and_transform",
+    "description": "Fetches data from a REST API and transforms the response",
+    "input_schema": {
+      "url": { "type": "string", "required": true, "description": "API endpoint URL" }
+    },
+    "nodes": [
+      {
+        "id": "fetch",
+        "type": "http_request",
+        "config": { "url": "{{input.url}}", "method": "GET" },
+        "outputs": { "status": { "type": "number" }, "body": { "type": "any" } }
+      },
+      {
+        "id": "transform",
+        "type": "json_transform",
+        "config": {
+          "mapping": {
+            "data": "{{nodes.fetch.outputs.body}}",
+            "status": "{{nodes.fetch.outputs.status}}"
+          }
+        },
+        "outputs": { "result": { "type": "object" } }
+      }
+    ],
+    "edges": [{ "from": "fetch", "to": "transform" }],
+    "output": "{{nodes.transform.outputs.result}}",
+    "_ui": {
+      "positions": {
+        "fetch": { "x": 250, "y": 100 },
+        "transform": { "x": 250, "y": 280 }
+      }
+    }
+  }
+}

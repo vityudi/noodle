@@ -1,0 +1,45 @@
+{
+  "id": "authenticated_request",
+  "name": "Authenticated API Call",
+  "description": "Makes an API call with a Bearer token from stored credentials.",
+  "category": "HTTP",
+  "flow": {
+    "schema_version": "1.0",
+    "name": "authenticated_request",
+    "description": "Makes an authenticated API call using a stored credential",
+    "input_schema": {
+      "path": { "type": "string", "required": true, "description": "API path (e.g. /users/123)" }
+    },
+    "nodes": [
+      {
+        "id": "fetch",
+        "type": "http_request",
+        "config": {
+          "url": "{{env.API_BASE_URL}}{{input.path}}",
+          "method": "GET",
+          "headers": { "Authorization": "Bearer {{credentials.my_api_key}}" }
+        },
+        "outputs": { "status": { "type": "number" }, "body": { "type": "any" } }
+      },
+      {
+        "id": "result",
+        "type": "json_transform",
+        "config": {
+          "mapping": {
+            "data": "{{nodes.fetch.outputs.body}}",
+            "status": "{{nodes.fetch.outputs.status}}"
+          }
+        },
+        "outputs": { "result": { "type": "object" } }
+      }
+    ],
+    "edges": [{ "from": "fetch", "to": "result" }],
+    "output": "{{nodes.result.outputs.result}}",
+    "_ui": {
+      "positions": {
+        "fetch": { "x": 250, "y": 100 },
+        "result": { "x": 250, "y": 280 }
+      }
+    }
+  }
+}

@@ -89,7 +89,10 @@ export function Dashboard({ onLogout, onOpenProject }: Props) {
               <CreateProjectDialog
                 open={createOpen}
                 onOpenChange={setCreateOpen}
-                onCreated={() => queryClient.invalidateQueries({ queryKey: ["projects"] })}
+                onCreated={(project) => {
+                  queryClient.invalidateQueries({ queryKey: ["projects"] });
+                  onOpenProject(project);
+                }}
               />
             </>
           )}

@@ -56,7 +56,7 @@ func compare(left interface{}, op string, right interface{}) (bool, error) {
 			return lf < rf, nil
 		case "gte":
 			return lf >= rf, nil
-		case "lte":
+		default:
 			return lf <= rf, nil
 		}
 	}

@@ -1,0 +1,56 @@
+{
+  "id": "health_check",
+  "name": "Health Check",
+  "description": "Pings a URL and returns whether the service is healthy (status <= 299).",
+  "category": "Monitoring",
+  "flow": {
+    "schema_version": "1.0",
+    "name": "health_check",
+    "description": "Checks if a service is healthy",
+    "input_schema": {
+      "url": { "type": "string", "required": true, "description": "Service URL to check" }
+    },
+    "nodes": [
+      {
+        "id": "ping",
+        "type": "http_request",
+        "config": { "url": "{{input.url}}", "method": "GET" },
+        "outputs": { "status": { "type": "number" }, "body": { "type": "any" } }
+      },
+      {
+        "id": "check",
+        "type": "condition",
+        "config": {
+          "left": "{{nodes.ping.outputs.status}}",
+          "operator": "lte",
+          "right": "299"
+        },
+        "outputs": { "result": { "type": "boolean" } }
+      },
+      {
+        "id": "format",
+        "type": "json_transform",
+        "config": {
+          "mapping": {
+            "healthy": "{{nodes.check.outputs.result}}",
+            "status_code": "{{nodes.ping.outputs.status}}",
+            "url": "{{input.url}}"
+          }
+        },
+        "outputs": { "result": { "type": "object" } }
+      }
+    ],
+    "edges": [
+      { "from": "ping", "to": "check" },
+      { "from": "check", "to": "format" }
+    ],
+    "output": "{{nodes.format.outputs.result}}",
+    "_ui": {
+      "positions": {
+        "ping": { "x": 250, "y": 80 },
+        "check": { "x": 250, "y": 240 },
+        "format": { "x": 250, "y": 400 }
+      }
+    }
+  }
+}
