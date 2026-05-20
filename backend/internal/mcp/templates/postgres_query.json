@@ -1,0 +1,62 @@
+{
+  "id": "postgres_query",
+  "name": "PostgreSQL Query",
+  "description": "Lets Claude query your PostgreSQL database. Claude writes the SQL based on your natural language request.",
+  "category": "Database",
+  "inputs": [
+    {
+      "key": "pg_database",
+      "label": "Connection String",
+      "description": "PostgreSQL connection string",
+      "type": "secret",
+      "target": "credential",
+      "credential_field": "connection_string",
+      "connection_type": "postgres",
+      "placeholder": "postgres://user:password@localhost:5432/mydb",
+      "required": true
+    }
+  ],
+  "flow": {
+    "schema_version": "1.0",
+    "name": "postgres_query",
+    "description": "Executes a SQL query against a PostgreSQL database and returns the results",
+    "input_schema": {
+      "query": { "type": "string", "required": true, "description": "SQL query to execute (SELECT, INSERT, UPDATE, DELETE)" }
+    },
+    "nodes": [
+      {
+        "id": "db",
+        "type": "postgres",
+        "config": {
+          "connection_string": "{{credentials.pg_database.connection_string}}",
+          "query": "{{input.query}}"
+        },
+        "outputs": {
+          "rows": { "type": "array" },
+          "row_count": { "type": "number" },
+          "rows_affected": { "type": "number" }
+        }
+      },
+      {
+        "id": "result",
+        "type": "json_transform",
+        "config": {
+          "mapping": {
+            "rows": "{{nodes.db.outputs.rows}}",
+            "row_count": "{{nodes.db.outputs.row_count}}",
+            "rows_affected": "{{nodes.db.outputs.rows_affected}}"
+          }
+        },
+        "outputs": { "result": { "type": "object" } }
+      }
+    ],
+    "edges": [{ "from": "db", "to": "result" }],
+    "output": "{{nodes.result.outputs.result}}",
+    "_ui": {
+      "positions": {
+        "db":     { "x": 250, "y": 100 },
+        "result": { "x": 250, "y": 280 }
+      }
+    }
+  }
+}

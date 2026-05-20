@@ -27,6 +27,7 @@ func NewHandler(db *pgxpool.Pool) *Handler { return &Handler{db: db} }
 //   POST /mcp/{slug}/message          — JSON-RPC messages from MCP client
 func (h *Handler) Routes(r chi.Router) {
 	r.Get("/mcp/{slug}", h.listTools)
+	r.Get("/mcp/{slug}/status", h.status)
 	r.Post("/mcp/{slug}/tools/call", h.callTool)
 	r.Get("/mcp/{slug}/resources", h.listResources)
 	r.Post("/mcp/{slug}/resources/read", h.readResource)
@@ -81,6 +82,20 @@ func (h *Handler) flowsForProject(ctx context.Context, projectID string) ([]flow
 		}
 	}
 	return out, nil
+}
+
+// status returns whether any MCP client is currently connected via SSE.
+func (h *Handler) status(w http.ResponseWriter, r *http.Request) {
+	slug := chi.URLParam(r, "slug")
+	if _, err := h.projectBySlug(r.Context(), slug); err != nil {
+		writeError(w, http.StatusNotFound, "project not found")
+		return
+	}
+	n := activeSessionCount(slug)
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"connected": n > 0,
+		"sessions":  n,
+	})
 }
 
 func (h *Handler) listTools(w http.ResponseWriter, r *http.Request) {

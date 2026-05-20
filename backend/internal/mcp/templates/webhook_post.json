@@ -1,0 +1,61 @@
+{
+  "id": "webhook_post",
+  "name": "Webhook / HTTP POST",
+  "description": "Sends a JSON payload to any webhook URL. Works with Slack, Discord, Zapier, Make, and custom endpoints.",
+  "category": "HTTP",
+  "inputs": [
+    {
+      "key": "WEBHOOK_URL",
+      "label": "Webhook URL",
+      "description": "The URL that will receive the POST request",
+      "type": "url",
+      "target": "env",
+      "placeholder": "https://hooks.slack.com/services/...",
+      "required": true
+    }
+  ],
+  "flow": {
+    "schema_version": "1.0",
+    "name": "send_webhook",
+    "description": "Sends a JSON payload to a configured webhook URL",
+    "input_schema": {
+      "payload": { "type": "object", "required": true, "description": "JSON object to send as the request body" }
+    },
+    "nodes": [
+      {
+        "id": "send",
+        "type": "http_request",
+        "config": {
+          "url":    "{{env.WEBHOOK_URL}}",
+          "method": "POST",
+          "headers": { "Content-Type": "application/json" },
+          "body":   "{{input.payload}}"
+        },
+        "outputs": {
+          "status": { "type": "number" },
+          "body":   { "type": "any" }
+        }
+      },
+      {
+        "id": "result",
+        "type": "json_transform",
+        "config": {
+          "mapping": {
+            "status":  "{{nodes.send.outputs.status}}",
+            "success": "{{nodes.send.outputs.status}}",
+            "body":    "{{nodes.send.outputs.body}}"
+          }
+        },
+        "outputs": { "result": { "type": "object" } }
+      }
+    ],
+    "edges": [{ "from": "send", "to": "result" }],
+    "output": "{{nodes.result.outputs.result}}",
+    "_ui": {
+      "positions": {
+        "send":   { "x": 250, "y": 100 },
+        "result": { "x": 250, "y": 280 }
+      }
+    }
+  }
+}

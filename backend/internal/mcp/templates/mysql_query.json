@@ -1,0 +1,64 @@
+{
+  "id": "mysql_query",
+  "name": "MySQL Query",
+  "description": "Lets Claude query your MySQL or MariaDB database. Claude writes the SQL based on your natural language request.",
+  "category": "Database",
+  "inputs": [
+    {
+      "key": "mysql_database",
+      "label": "Connection String",
+      "description": "MySQL connection string",
+      "type": "secret",
+      "target": "credential",
+      "credential_field": "connection_string",
+      "connection_type": "mysql",
+      "placeholder": "user:password@tcp(localhost:3306)/mydb",
+      "required": true
+    }
+  ],
+  "flow": {
+    "schema_version": "1.0",
+    "name": "mysql_query",
+    "description": "Executes a SQL query against a MySQL database and returns the results",
+    "input_schema": {
+      "query": { "type": "string", "required": true, "description": "SQL query to execute (SELECT, INSERT, UPDATE, DELETE)" }
+    },
+    "nodes": [
+      {
+        "id": "db",
+        "type": "mysql",
+        "config": {
+          "connection_string": "{{credentials.mysql_database.connection_string}}",
+          "query": "{{input.query}}"
+        },
+        "outputs": {
+          "rows": { "type": "array" },
+          "row_count": { "type": "number" },
+          "rows_affected": { "type": "number" },
+          "last_insert_id": { "type": "number" }
+        }
+      },
+      {
+        "id": "result",
+        "type": "json_transform",
+        "config": {
+          "mapping": {
+            "rows": "{{nodes.db.outputs.rows}}",
+            "row_count": "{{nodes.db.outputs.row_count}}",
+            "rows_affected": "{{nodes.db.outputs.rows_affected}}",
+            "last_insert_id": "{{nodes.db.outputs.last_insert_id}}"
+          }
+        },
+        "outputs": { "result": { "type": "object" } }
+      }
+    ],
+    "edges": [{ "from": "db", "to": "result" }],
+    "output": "{{nodes.result.outputs.result}}",
+    "_ui": {
+      "positions": {
+        "db":     { "x": 250, "y": 100 },
+        "result": { "x": 250, "y": 280 }
+      }
+    }
+  }
+}

@@ -116,7 +116,7 @@ function toNoodleSchema(
 
   // Find terminal node (no outgoing edges, not trigger) for output expression.
   const sourcesWithEdges = new Set(noodleEdges.map((e) => e.from));
-  const terminal = noodleNodes.findLast((n) => !sourcesWithEdges.has(n.id));
+  const terminal = [...noodleNodes].reverse().find((n) => !sourcesWithEdges.has(n.id));
   let output = "";
   if (terminal) {
     const firstOutput = Object.keys(terminal.outputs ?? {})[0];

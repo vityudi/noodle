@@ -3,6 +3,7 @@
   "name": "REST API Fetch",
   "description": "Fetches data from a REST API endpoint and returns the response body.",
   "category": "HTTP",
+  "inputs": [],
   "flow": {
     "schema_version": "1.0",
     "name": "fetch_data",

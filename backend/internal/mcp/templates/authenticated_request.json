@@ -3,6 +3,27 @@
   "name": "Authenticated API Call",
   "description": "Makes an API call with a Bearer token from stored credentials.",
   "category": "HTTP",
+  "inputs": [
+    {
+      "key": "API_BASE_URL",
+      "label": "API Base URL",
+      "description": "The base URL of your API (e.g. https://api.example.com)",
+      "type": "url",
+      "target": "env",
+      "placeholder": "https://api.example.com",
+      "required": true
+    },
+    {
+      "key": "api_token",
+      "label": "API Key / Bearer Token",
+      "description": "Your authentication token — will be stored encrypted",
+      "type": "secret",
+      "target": "credential",
+      "credential_field": "token",
+      "placeholder": "sk-...",
+      "required": true
+    }
+  ],
   "flow": {
     "schema_version": "1.0",
     "name": "authenticated_request",
@@ -17,7 +38,7 @@
         "config": {
           "url": "{{env.API_BASE_URL}}{{input.path}}",
           "method": "GET",
-          "headers": { "Authorization": "Bearer {{credentials.my_api_key}}" }
+          "headers": { "Authorization": "Bearer {{credentials.api_token.token}}" }
         },
         "outputs": { "status": { "type": "number" }, "body": { "type": "any" } }
       },

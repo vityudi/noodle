@@ -17,7 +17,7 @@ export default defineConfig({
     },
     proxy: {
       "/api": { target: "http://backend:8080", changeOrigin: true },
-      "/mcp": { target: "http://backend:8080", changeOrigin: true },
+      "/mcp": { target: "http://backend:8080" },
       "/schema": { target: "http://backend:8080", changeOrigin: true },
     },
   },

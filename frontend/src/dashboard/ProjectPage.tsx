@@ -7,8 +7,10 @@ import {
 import {
   ChevronLeft, Plus, ArrowRight, KeyRound,
   SlidersHorizontal, Download, Trash2, Eye, EyeOff, Key, Lock,
-  Check, AlertCircle, Code2, Layers, ChevronDown, X,
+  Check, AlertCircle, Code2, Layers, ChevronDown, Link2,
 } from "lucide-react";
+import { TemplateWizard } from "./TemplateWizard";
+import { ConnectModal } from "./ConnectModal";
 import {
   Select,
   SelectContent,
@@ -70,65 +72,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   utility:   "bg-zinc-500/10 text-zinc-400 border-zinc-700",
 };
 
-function UseTemplateModal({ template, project, onClose, onCreated }: {
-  template: FlowTemplate;
-  project: Project;
-  onClose: () => void;
-  onCreated: () => void;
-}) {
-  const [name, setName] = useState(template.name.toLowerCase().replace(/\s+/g, "_"));
-  const qc = useQueryClient();
-
-  const mutation = useMutation({
-    mutationFn: () =>
-      flowsApi.create(project.id, { name, description: template.description, flow_json: template.flow }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["flows", project.id] });
-      onCreated();
-      onClose();
-    },
-  });
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-sm p-6 shadow-2xl">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <p className="text-sm font-semibold text-zinc-100">Use template</p>
-            <p className="text-xs text-zinc-500 mt-0.5">{template.name}</p>
-          </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300">
-            <X size={15} />
-          </button>
-        </div>
-        <label className="block text-xs text-zinc-400 mb-1.5">Flow name</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-zinc-500 mb-4"
-        />
-        {mutation.isError && (
-          <p className="text-xs text-red-400 mb-2">Failed — name may already exist.</p>
-        )}
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 text-sm border border-zinc-700 text-zinc-400 rounded-lg hover:text-zinc-200 transition"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => mutation.mutate()}
-            disabled={!name || mutation.isPending}
-            className="flex-1 px-4 py-2 text-sm bg-white text-zinc-900 font-medium rounded-lg hover:bg-zinc-200 transition disabled:opacity-50"
-          >
-            {mutation.isPending ? "Creating…" : "Create flow"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function TemplatesSection({ project }: { project: Project }) {
   const [open, setOpen] = useState(false);
@@ -220,11 +163,10 @@ function TemplatesSection({ project }: { project: Project }) {
       )}
 
       {selected && (
-        <UseTemplateModal
+        <TemplateWizard
           template={selected}
-          project={project}
+          projects={[project]}
           onClose={() => setSelected(null)}
-          onCreated={() => setSelected(null)}
         />
       )}
     </div>
@@ -979,6 +921,8 @@ const TABS: Array<{ id: ProjectTab; label: string; icon: React.ElementType }> = 
 ];
 
 export function ProjectPage({ project, tab, onTabChange, onBack, onOpenBuilder }: Props) {
+  const [connectOpen, setConnectOpen] = useState(false);
+
   return (
     <div className="flex-1 flex flex-col bg-zinc-950 text-zinc-100 overflow-hidden">
       {/* Header */}
@@ -995,7 +939,20 @@ export function ProjectPage({ project, tab, onTabChange, onBack, onOpenBuilder }
         {project.description && (
           <span className="text-xs text-zinc-600 truncate max-w-xs">— {project.description}</span>
         )}
+        <div className="ml-auto">
+          <button
+            onClick={() => setConnectOpen(true)}
+            className="flex items-center gap-1.5 text-xs border border-zinc-700 text-zinc-400 rounded-lg px-3 py-1.5 hover:bg-zinc-800 hover:text-zinc-100 transition"
+          >
+            <Link2 size={12} />
+            Connect to Claude
+          </button>
+        </div>
       </header>
+
+      {connectOpen && (
+        <ConnectModal project={project} onClose={() => setConnectOpen(false)} />
+      )}
 
       {/* Tabs */}
       <div className="border-b border-zinc-800 px-6 shrink-0">

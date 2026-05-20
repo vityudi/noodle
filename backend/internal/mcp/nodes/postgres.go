@@ -26,11 +26,20 @@ import (
 //	rows_affected  number  — number of rows affected
 type PostgreSQLNode struct{}
 
+// normalizeConnStr converts JDBC-style URLs (jdbc:postgresql://...) to the
+// pgx-native format (postgres://...) so users can paste either form.
+func normalizeConnStr(s string) string {
+	s = strings.TrimPrefix(s, "jdbc:")
+	s = strings.Replace(s, "postgresql://", "postgres://", 1)
+	return s
+}
+
 func (n *PostgreSQLNode) Execute(ctx context.Context, config map[string]interface{}) (map[string]interface{}, error) {
 	connStr, _ := config["connection_string"].(string)
 	if connStr == "" {
 		return nil, fmt.Errorf("postgres: connection_string is required")
 	}
+	connStr = normalizeConnStr(connStr)
 	query, _ := config["query"].(string)
 	if query == "" {
 		return nil, fmt.Errorf("postgres: query is required")

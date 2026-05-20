@@ -172,7 +172,7 @@ export function AIPage({ onOpenProject }: Props) {
                   <p className="text-sm font-semibold text-zinc-100">
                     {(generatedFlow.name as string) || "Generated flow"}
                   </p>
-                  {generatedFlow.description && (
+                  {!!generatedFlow.description && (
                     <p className="text-xs text-zinc-500 mt-0.5">
                       {generatedFlow.description as string}
                     </p>

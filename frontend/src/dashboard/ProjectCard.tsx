@@ -65,25 +65,30 @@ function DeleteConfirmDialog({
 }
 
 function HealthDot({ slug }: { slug: string }) {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["mcp-health", slug],
-    queryFn: () => mcpApi.listTools(slug),
+  const { data, isLoading } = useQuery({
+    queryKey: ["mcp-status", slug],
+    queryFn: () => mcpApi.status(slug),
     retry: false,
-    staleTime: 30_000,
-    refetchInterval: 60_000,
+    staleTime: 10_000,
+    refetchInterval: 15_000,
   });
 
   if (isLoading) {
     return <span className="w-2 h-2 rounded-full bg-zinc-600 animate-pulse" title="Checking…" />;
   }
-  if (isError || !data) {
-    return <span className="w-2 h-2 rounded-full bg-red-500" title="MCP endpoint unreachable" />;
+  if (data?.connected) {
+    const n = data.sessions;
+    return (
+      <span
+        className="w-2 h-2 rounded-full bg-green-500"
+        title={`Connected to Claude · ${n} active session${n !== 1 ? "s" : ""}`}
+      />
+    );
   }
-  const count = data.tools?.length ?? 0;
   return (
     <span
-      className="w-2 h-2 rounded-full bg-green-500"
-      title={`${count} tool${count !== 1 ? "s" : ""} registered`}
+      className="w-2 h-2 rounded-full bg-zinc-600"
+      title="No active Claude connection"
     />
   );
 }

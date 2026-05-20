@@ -1,123 +1,20 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { templatesApi, projectsApi, flowsApi, type FlowTemplate, type Project } from "@/lib/api";
-import { Layers, ArrowRight, X, Check } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
+import { templatesApi, projectsApi, type FlowTemplate } from "@/lib/api";
+import { Layers, ArrowRight } from "lucide-react";
+import { TemplateWizard } from "./TemplateWizard";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  rest:         "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  transform:    "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  auth:         "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  utility:      "bg-zinc-500/10 text-zinc-400 border-zinc-600",
+  HTTP:       "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  Database:   "bg-violet-500/10 text-violet-400 border-violet-500/20",
+  Monitoring: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  transform:  "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  auth:       "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  utility:    "bg-zinc-500/10 text-zinc-400 border-zinc-600",
 };
 
 function categoryStyle(cat: string) {
   return CATEGORY_COLORS[cat] ?? "bg-zinc-500/10 text-zinc-400 border-zinc-600";
-}
-
-interface UseDialogProps {
-  template: FlowTemplate;
-  projects: Project[];
-  onClose: () => void;
-}
-
-function UseTemplateDialog({ template, projects, onClose }: UseDialogProps) {
-  const [selectedProjectId, setSelectedProjectId] = useState(projects[0]?.id ?? "");
-  const [flowName, setFlowName] = useState(template.name.toLowerCase().replace(/\s+/g, "_"));
-  const [done, setDone] = useState(false);
-
-  const create = useMutation({
-    mutationFn: () =>
-      flowsApi.create(selectedProjectId, {
-        name: flowName,
-        description: template.description,
-        flow_json: template.flow,
-      }),
-    onSuccess: () => setDone(true),
-  });
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-md p-6 shadow-2xl">
-        <div className="flex items-start justify-between mb-5">
-          <div>
-            <h2 className="text-sm font-semibold text-zinc-100">Use template</h2>
-            <p className="text-xs text-zinc-500 mt-0.5">{template.name}</p>
-          </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition">
-            <X size={16} />
-          </button>
-        </div>
-
-        {done ? (
-          <div className="flex flex-col items-center gap-3 py-6">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-              <Check size={18} className="text-emerald-400" />
-            </div>
-            <p className="text-sm text-zinc-300">Flow created successfully.</p>
-            <button
-              onClick={onClose}
-              className="mt-2 px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 text-sm hover:bg-zinc-700 transition"
-            >
-              Close
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-medium text-zinc-400 block mb-1.5">Project</label>
-              {projects.length === 0 ? (
-                <p className="text-xs text-zinc-500">No projects yet. Create a project first.</p>
-              ) : (
-                <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100 text-sm h-9 focus:ring-zinc-600 focus:ring-offset-zinc-900">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700 text-zinc-100">
-                    {projects.map((p) => (
-                      <SelectItem key={p.id} value={p.id} className="text-zinc-100 focus:bg-zinc-700 focus:text-zinc-100">
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            <div>
-              <label className="text-xs font-medium text-zinc-400 block mb-1.5">Flow name</label>
-              <input
-                value={flowName}
-                onChange={(e) => setFlowName(e.target.value)}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-500"
-                placeholder="flow_name"
-              />
-            </div>
-
-            <div className="flex gap-2 pt-1">
-              <button
-                onClick={onClose}
-                className="flex-1 px-4 py-2 rounded-lg border border-zinc-700 text-zinc-400 text-sm hover:text-zinc-200 hover:border-zinc-600 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => create.mutate()}
-                disabled={create.isPending || !selectedProjectId || !flowName}
-                className="flex-1 px-4 py-2 rounded-lg bg-white text-zinc-900 text-sm font-medium hover:bg-zinc-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {create.isPending ? "Creating…" : "Create flow"}
-              </button>
-            </div>
-
-            {create.isError && (
-              <p className="text-xs text-red-400">Failed to create flow. Try a different name.</p>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }
 
 export function TemplatesPage() {
@@ -133,6 +30,8 @@ export function TemplatesPage() {
     queryKey: ["projects"],
     queryFn: projectsApi.list,
   });
+
+  const hasProjects = projects.length > 0;
 
   const categories = [...new Set(templates.map((t) => t.category))];
 
@@ -197,8 +96,10 @@ export function TemplatesPage() {
               <p className="text-xs text-zinc-500 flex-1 leading-relaxed">{t.description}</p>
 
               <button
-                onClick={() => setSelectedTemplate(t)}
-                className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-100 transition group-hover:text-zinc-300"
+                onClick={() => hasProjects && setSelectedTemplate(t)}
+                disabled={!hasProjects}
+                title={!hasProjects ? "Create a project first" : undefined}
+                className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-100 transition group-hover:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Use template
                 <ArrowRight size={12} />
@@ -209,7 +110,7 @@ export function TemplatesPage() {
       )}
 
       {selectedTemplate && (
-        <UseTemplateDialog
+        <TemplateWizard
           template={selectedTemplate}
           projects={projects}
           onClose={() => setSelectedTemplate(null)}

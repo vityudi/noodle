@@ -55,6 +55,19 @@ func removeSession(id string) {
 	sessionsMu.Unlock()
 }
 
+// activeSessionCount returns how many SSE sessions are open for a given slug.
+func activeSessionCount(slug string) int {
+	sessionsMu.Lock()
+	defer sessionsMu.Unlock()
+	n := 0
+	for _, s := range sessions {
+		if s.slug == slug {
+			n++
+		}
+	}
+	return n
+}
+
 // sseConnect handles GET /mcp/{slug}/sse.
 // It establishes the SSE stream and sends the `endpoint` event per the MCP spec.
 func (h *Handler) sseConnect(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +95,16 @@ func (h *Handler) sseConnect(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	// Send the endpoint event so the client knows where to POST messages.
-	fmt.Fprintf(w, "event: endpoint\ndata: /mcp/%s/message?sessionId=%s\n\n", slug, sessionID)
+	// Use an absolute URL — some MCP clients (e.g. Claude Code) reject relative paths.
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+	host := r.Host
+	if host == "" {
+		host = "localhost:8080"
+	}
+	fmt.Fprintf(w, "event: endpoint\ndata: %s://%s/mcp/%s/message?sessionId=%s\n\n", scheme, host, slug, sessionID)
 	flusher.Flush()
 
 	// Stream responses until client disconnects.
@@ -117,7 +139,7 @@ func (h *Handler) sseMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go h.handleRPC(r.Context(), sess, req)
+	go h.handleRPC(context.Background(), sess, req)
 	w.WriteHeader(http.StatusAccepted)
 }
 
@@ -158,7 +180,7 @@ func (h *Handler) handleRPC(ctx context.Context, sess *session, req jsonRPCReque
 	switch req.Method {
 	case "initialize":
 		h.sendRPC(sess, req.ID, map[string]interface{}{
-			"protocolVersion": "2024-11-05",
+			"protocolVersion": "2025-03-26",
 			"serverInfo":      map[string]string{"name": "noodle", "version": "1.0"},
 			"capabilities": map[string]interface{}{
 				"tools":     map[string]bool{"listChanged": false},

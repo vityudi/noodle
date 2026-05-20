@@ -101,11 +101,13 @@ func (h *credentialsHandler) create(w http.ResponseWriter, r *http.Request) {
 	err = h.db.QueryRow(r.Context(),
 		`INSERT INTO credentials (project_id, name, type, data_enc)
 		 VALUES ($1, $2, $3, $4)
+		 ON CONFLICT (project_id, name) DO UPDATE
+		   SET type = EXCLUDED.type, data_enc = EXCLUDED.data_enc
 		 RETURNING id, project_id, name, type, created_at`,
 		projectID, req.Name, req.Type, []byte(encData),
 	).Scan(&c.ID, &c.ProjectID, &c.Name, &c.Type, &c.CreatedAt)
 	if err != nil {
-		writeError(w, http.StatusConflict, "credential name already exists")
+		writeError(w, http.StatusInternalServerError, "failed to save credential")
 		return
 	}
 	writeJSON(w, http.StatusCreated, c)

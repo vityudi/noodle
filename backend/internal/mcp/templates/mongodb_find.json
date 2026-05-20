@@ -1,0 +1,75 @@
+{
+  "id": "mongodb_find",
+  "name": "MongoDB Find",
+  "description": "Lets Claude query a MongoDB collection. Claude builds the filter based on your natural language request.",
+  "category": "Database",
+  "inputs": [
+    {
+      "key": "mongo_database",
+      "label": "Connection String",
+      "description": "MongoDB connection URI",
+      "type": "secret",
+      "target": "credential",
+      "credential_field": "connection_string",
+      "connection_type": "mongodb",
+      "placeholder": "mongodb://user:password@localhost:27017",
+      "required": true
+    },
+    {
+      "key": "MONGO_DATABASE",
+      "label": "Database Name",
+      "description": "The MongoDB database to connect to",
+      "type": "string",
+      "target": "env",
+      "placeholder": "myapp",
+      "required": true
+    }
+  ],
+  "flow": {
+    "schema_version": "1.0",
+    "name": "mongodb_find",
+    "description": "Queries a MongoDB collection with a filter and returns matching documents",
+    "input_schema": {
+      "collection": { "type": "string", "required": true, "description": "Collection name to query" },
+      "filter":     { "type": "object", "required": false, "description": "MongoDB filter object (defaults to {} for all documents)" },
+      "limit":      { "type": "number", "required": false, "description": "Maximum number of documents to return (default: 20)" }
+    },
+    "nodes": [
+      {
+        "id": "db",
+        "type": "mongodb",
+        "config": {
+          "connection_string": "{{credentials.mongo_database.connection_string}}",
+          "database":   "{{env.MONGO_DATABASE}}",
+          "collection": "{{input.collection}}",
+          "operation":  "find",
+          "filter":     "{{input.filter}}",
+          "limit":      "{{input.limit}}"
+        },
+        "outputs": {
+          "documents": { "type": "array" },
+          "count":     { "type": "number" }
+        }
+      },
+      {
+        "id": "result",
+        "type": "json_transform",
+        "config": {
+          "mapping": {
+            "documents": "{{nodes.db.outputs.documents}}",
+            "count":     "{{nodes.db.outputs.count}}"
+          }
+        },
+        "outputs": { "result": { "type": "object" } }
+      }
+    ],
+    "edges": [{ "from": "db", "to": "result" }],
+    "output": "{{nodes.result.outputs.result}}",
+    "_ui": {
+      "positions": {
+        "db":     { "x": 250, "y": 100 },
+        "result": { "x": 250, "y": 280 }
+      }
+    }
+  }
+}

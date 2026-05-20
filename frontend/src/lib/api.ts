@@ -106,11 +106,24 @@ export const settingsApi = {
     api.put("/api/settings/ai", data).then((r) => r.data),
 };
 
+export interface TemplateInput {
+  key: string;
+  label: string;
+  description: string;
+  type: "string" | "url" | "secret";
+  target: "env" | "credential";
+  credential_field?: string;
+  connection_type?: "postgres" | "mysql" | "mongodb";
+  placeholder?: string;
+  required: boolean;
+}
+
 export interface FlowTemplate {
   id: string;
   name: string;
   description: string;
   category: string;
+  inputs: TemplateInput[];
   flow: object;
 }
 
@@ -175,6 +188,13 @@ export const credentialsApi = {
     api.delete(`/api/projects/${projectId}/credentials/${id}`),
   reveal: (projectId: string, id: string) =>
     api.get<{ data: Record<string, string> }>(`/api/projects/${projectId}/credentials/${id}/reveal`).then((r) => r.data),
+  testConnection: (projectId: string, type: string, connectionString: string) =>
+    api
+      .post<{ ok: boolean; latency_ms?: number; error?: string }>(
+        `/api/projects/${projectId}/test-connection`,
+        { type, connection_string: connectionString }
+      )
+      .then((r) => r.data),
 };
 
 export const flowsApi = {
@@ -209,6 +229,8 @@ export interface MCPResource {
 }
 
 export const mcpApi = {
+  status: (slug: string) =>
+    api.get<{ connected: boolean; sessions: number }>(`/mcp/${slug}/status`).then((r) => r.data),
   listTools: (slug: string) =>
     api.get<{ name: string; version: string; tools: MCPTool[] }>(`/mcp/${slug}`).then((r) => r.data),
   callTool: (slug: string, tool: string, input: Record<string, unknown>) =>

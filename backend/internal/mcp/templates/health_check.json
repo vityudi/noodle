@@ -3,6 +3,7 @@
   "name": "Health Check",
   "description": "Pings a URL and returns whether the service is healthy (status <= 299).",
   "category": "Monitoring",
+  "inputs": [],
   "flow": {
     "schema_version": "1.0",
     "name": "health_check",

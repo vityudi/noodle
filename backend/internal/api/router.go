@@ -69,6 +69,9 @@ func NewRouter(db *pgxpool.Pool, devMode bool) http.Handler {
 			r.Get("/{credID}/reveal", creds.reveal)
 		})
 
+		tc := &testConnHandler{db: db}
+		r.Post("/api/projects/{projectID}/test-connection", tc.test)
+
 		env := &envHandler{db: db}
 		r.Route("/api/projects/{projectID}/env", func(r chi.Router) {
 			r.Get("/", env.list)

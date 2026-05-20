@@ -3,6 +3,7 @@
   "name": "Fetch + Transform",
   "description": "Fetches data from a REST API and remaps specific fields from the response.",
   "category": "HTTP",
+  "inputs": [],
   "flow": {
     "schema_version": "1.0",
     "name": "fetch_and_transform",

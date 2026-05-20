@@ -10,11 +10,24 @@ import (
 //go:embed *.json
 var fs embed.FS
 
+type TemplateInput struct {
+	Key             string `json:"key"`
+	Label           string `json:"label"`
+	Description     string `json:"description"`
+	Type            string `json:"type"`             // "string" | "url" | "secret"
+	Target          string `json:"target"`            // "env" | "credential"
+	CredentialField string `json:"credential_field,omitempty"`
+	ConnectionType  string `json:"connection_type,omitempty"` // "postgres" | "mysql" | "mongodb"
+	Placeholder     string `json:"placeholder,omitempty"`
+	Required        bool   `json:"required"`
+}
+
 type Template struct {
 	ID          string          `json:"id"`
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
 	Category    string          `json:"category"`
+	Inputs      []TemplateInput `json:"inputs"`
 	Flow        json.RawMessage `json:"flow"`
 }
 
