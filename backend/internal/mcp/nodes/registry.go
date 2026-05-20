@@ -15,4 +15,5 @@ var Registry = map[string]Node{
 	"variable":       &VariableNode{},
 	"loop":           &LoopNode{},
 	"merge":          &MergeNode{},
+	"script":         &ScriptNode{},
 }

@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
-import { Globe, Braces, GitBranch, Zap, Trash2, Box, Repeat, Combine } from "lucide-react";
+import { Globe, Braces, GitBranch, Zap, Trash2, Box, Repeat, Combine, Code2 } from "lucide-react";
 
 function DeleteButton({ id }: { id: string }) {
   const { deleteElements } = useReactFlow();
@@ -248,15 +248,36 @@ export const MergeNode = memo(({ id, data, selected }: NodeProps) => {
 });
 MergeNode.displayName = "MergeNode";
 
+// ── script ─────────────────────────────────────────────────────────────────
+export const ScriptNode = memo(({ id, data, selected }: NodeProps) => {
+  const d = data as { label?: string; config?: { code?: string } };
+  const lines = (d.config?.code ?? "").split("\n").filter(Boolean).length;
+  return (
+    <NodeCard
+      id={id}
+      accent="bg-fuchsia-500/15" iconColor="text-fuchsia-400"
+      icon={<Code2 size={13} />}
+      label={d.label ?? "Script"}
+      selected={!!selected} ring="border-fuchsia-500/50 shadow-fuchsia-900/20"
+    >
+      {lines > 0
+        ? <span className="text-zinc-500">{lines} line{lines !== 1 ? "s" : ""} of JS</span>
+        : <span className="text-zinc-600 italic">No code written</span>}
+    </NodeCard>
+  );
+});
+ScriptNode.displayName = "ScriptNode";
+
 // ── registry ───────────────────────────────────────────────────────────────
 export const nodeTypes = {
-  trigger: TriggerNode,
-  httpRequest: HttpRequestNode,
+  trigger:       TriggerNode,
+  httpRequest:   HttpRequestNode,
   jsonTransform: JsonTransformNode,
-  condition: ConditionNode,
-  variable: VariableNode,
-  loop: LoopNode,
-  merge: MergeNode,
+  condition:     ConditionNode,
+  variable:      VariableNode,
+  loop:          LoopNode,
+  merge:         MergeNode,
+  script:        ScriptNode,
 };
 
 export function defaultNodeData(type: string): Record<string, unknown> {
@@ -268,6 +289,7 @@ export function defaultNodeData(type: string): Record<string, unknown> {
     case "variable":      return { label: "Variable",       config: { value: "" } };
     case "loop":          return { label: "Loop",           config: { items: "", field: "" } };
     case "merge":         return { label: "Merge",          config: {} };
+    case "script":        return { label: "Script",         config: { code: "// input is available\nreturn input", input: "" } };
     default:              return { label: type, config: {} };
   }
 }

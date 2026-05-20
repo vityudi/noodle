@@ -16,6 +16,7 @@ const TYPE_LABELS: Record<string, string> = {
   variable:      "Variable",
   loop:          "Loop",
   merge:         "Merge",
+  script:        "Script (JS)",
 };
 
 export function NodePropertiesPanel({ node, onUpdate, onClose }: Props) {

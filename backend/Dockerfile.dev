@@ -2,6 +2,10 @@ FROM golang:1.23-alpine
 RUN apk add --no-cache git curl
 RUN curl -sSfL https://raw.githubusercontent.com/air-verse/air/master/install.sh | sh -s -- -b /usr/local/bin
 WORKDIR /app
+# Allow go to fetch and record new deps automatically on every hot-reload build.
+# On first start, goja will be downloaded and go.mod/go.sum (volume-mounted) will be updated.
+ENV GONOSUMDB=*
+ENV GOFLAGS=-mod=mod
 COPY go.mod go.sum ./
 RUN go mod download
 EXPOSE 8080

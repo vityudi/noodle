@@ -1,4 +1,4 @@
-import { Globe, Braces, GitBranch, Zap, Box, Repeat, Combine } from "lucide-react";
+import { Globe, Braces, GitBranch, Zap, Box, Repeat, Combine, Code2 } from "lucide-react";
 
 const NODES = [
   {
@@ -49,6 +49,13 @@ const NODES = [
     icon: Combine,
     color: "text-rose-400",
     description: "Join multiple values",
+  },
+  {
+    type: "script",
+    label: "Script",
+    icon: Code2,
+    color: "text-fuchsia-400",
+    description: "Run custom JavaScript",
   },
 ];
 

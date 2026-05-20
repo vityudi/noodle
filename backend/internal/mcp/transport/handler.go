@@ -19,11 +19,15 @@ func NewHandler(db *pgxpool.Pool) *Handler { return &Handler{db: db} }
 
 // Routes mounts MCP endpoints on r.
 //
-//   GET  /mcp/{slug}              — list tools (discovery)
-//   POST /mcp/{slug}/tools/call   — execute a tool
+//   GET  /mcp/{slug}              — list tools (REST discovery)
+//   POST /mcp/{slug}/tools/call   — execute a tool (REST)
+//   GET  /mcp/{slug}/sse          — SSE stream (MCP protocol transport)
+//   POST /mcp/{slug}/message      — JSON-RPC messages from MCP client
 func (h *Handler) Routes(r chi.Router) {
 	r.Get("/mcp/{slug}", h.listTools)
 	r.Post("/mcp/{slug}/tools/call", h.callTool)
+	r.Get("/mcp/{slug}/sse", h.sseConnect)
+	r.Post("/mcp/{slug}/message", h.sseMessage)
 }
 
 // ToolDef is the MCP tool descriptor returned by the discovery endpoint.

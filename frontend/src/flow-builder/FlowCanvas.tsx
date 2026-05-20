@@ -37,6 +37,7 @@ const RF_TO_NOODLE: Record<string, string> = {
   variable:      "variable",
   loop:          "loop",
   merge:         "merge",
+  script:        "script",
 };
 
 const NOODLE_TO_RF: Record<string, string> = {
@@ -47,6 +48,7 @@ const NOODLE_TO_RF: Record<string, string> = {
   variable:       "variable",
   loop:           "loop",
   merge:          "merge",
+  script:         "script",
 };
 
 const DEFAULT_OUTPUTS: Record<string, Record<string, { type: string }>> = {
@@ -56,6 +58,7 @@ const DEFAULT_OUTPUTS: Record<string, Record<string, { type: string }>> = {
   variable:       { value: { type: "any" } },
   loop:           { items: { type: "array" }, count: { type: "number" } },
   merge:          { result: { type: "object" } },
+  script:         { result: { type: "any" } },
 };
 
 interface NoodleSchema {
