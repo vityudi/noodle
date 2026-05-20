@@ -25,13 +25,15 @@ CREATE TABLE mcp_projects (
 );
 
 CREATE TABLE flows (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id  UUID NOT NULL REFERENCES mcp_projects(id) ON DELETE CASCADE,
-    name        TEXT NOT NULL,
-    description TEXT,
-    flow_json   JSONB NOT NULL DEFAULT '{}',
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id   UUID NOT NULL REFERENCES mcp_projects(id) ON DELETE CASCADE,
+    name         TEXT NOT NULL,
+    description  TEXT,
+    flow_json    JSONB NOT NULL DEFAULT '{}',
+    flow_type    TEXT NOT NULL DEFAULT 'tool',
+    resource_uri TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE credentials (

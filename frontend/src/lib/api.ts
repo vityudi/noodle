@@ -65,6 +65,8 @@ export interface Flow {
   name: string;
   description: string;
   flow_json: object;
+  flow_type: "tool" | "resource";
+  resource_uri: string;
   created_at: string;
   updated_at: string;
 }
@@ -126,13 +128,6 @@ export const aiApi = {
       .then((r) => r.data.flow),
 };
 
-export const mcpApi = {
-  listTools: (slug: string) =>
-    api.get(`/mcp/${slug}`).then((r) => r.data),
-  callTool: (slug: string, tool: string, input: Record<string, unknown>) =>
-    api.post(`/mcp/${slug}/tools/call`, { tool, input }).then((r) => r.data),
-};
-
 export const credentialsApi = {
   list: (projectId: string) =>
     api.get<Credential[]>(`/api/projects/${projectId}/credentials`).then((r) => r.data),
@@ -147,13 +142,41 @@ export const credentialsApi = {
 export const flowsApi = {
   list: (projectId: string) =>
     api.get<Flow[]>(`/api/projects/${projectId}/flows`).then((r) => r.data),
-  create: (projectId: string, data: { name: string; description?: string; flow_json?: object }) =>
+  create: (projectId: string, data: { name: string; description?: string; flow_json?: object; flow_type?: string; resource_uri?: string }) =>
     api.post<Flow>(`/api/projects/${projectId}/flows`, data).then((r) => r.data),
   update: (
     projectId: string,
     flowId: string,
-    data: { name?: string; description?: string; flow_json?: object }
+    data: { name?: string; description?: string; flow_json?: object; flow_type?: string; resource_uri?: string }
   ) => api.put<Flow>(`/api/projects/${projectId}/flows/${flowId}`, data).then((r) => r.data),
   delete: (projectId: string, flowId: string) =>
     api.delete(`/api/projects/${projectId}/flows/${flowId}`),
+};
+
+export interface MCPTool {
+  name: string;
+  description: string;
+  inputSchema: {
+    type: string;
+    properties: Record<string, { type: string; description?: string }>;
+    required?: string[];
+  };
+}
+
+export interface MCPResource {
+  uri: string;
+  name: string;
+  description: string;
+  mimeType: string;
+}
+
+export const mcpApi = {
+  listTools: (slug: string) =>
+    api.get<{ name: string; version: string; tools: MCPTool[] }>(`/mcp/${slug}`).then((r) => r.data),
+  callTool: (slug: string, tool: string, input: Record<string, unknown>) =>
+    api.post(`/mcp/${slug}/tools/call`, { tool, input }).then((r) => r.data),
+  listResources: (slug: string) =>
+    api.get<{ resources: MCPResource[] }>(`/mcp/${slug}/resources`).then((r) => r.data),
+  readResource: (slug: string, uri: string) =>
+    api.post(`/mcp/${slug}/resources/read`, { uri }).then((r) => r.data),
 };

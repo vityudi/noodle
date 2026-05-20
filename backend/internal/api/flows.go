@@ -18,6 +18,8 @@ type Flow struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description,omitempty"`
 	FlowJSON    json.RawMessage `json:"flow_json"`
+	FlowType    string          `json:"flow_type"`
+	ResourceURI string          `json:"resource_uri,omitempty"`
 	CreatedAt   time.Time       `json:"created_at"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }
@@ -40,7 +42,7 @@ func (h *flowsHandler) list(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := h.db.Query(r.Context(),
-		`SELECT id, project_id, name, COALESCE(description,''), flow_json, created_at, updated_at FROM flows WHERE project_id = $1 ORDER BY created_at DESC`,
+		`SELECT id, project_id, name, COALESCE(description,''), flow_json, COALESCE(flow_type,'tool'), COALESCE(resource_uri,''), created_at, updated_at FROM flows WHERE project_id = $1 ORDER BY created_at DESC`,
 		projectID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "db error")
@@ -51,7 +53,7 @@ func (h *flowsHandler) list(w http.ResponseWriter, r *http.Request) {
 	flows := []Flow{}
 	for rows.Next() {
 		var f Flow
-		if err := rows.Scan(&f.ID, &f.ProjectID, &f.Name, &f.Description, &f.FlowJSON, &f.CreatedAt, &f.UpdatedAt); err != nil {
+		if err := rows.Scan(&f.ID, &f.ProjectID, &f.Name, &f.Description, &f.FlowJSON, &f.FlowType, &f.ResourceURI, &f.CreatedAt, &f.UpdatedAt); err != nil {
 			continue
 		}
 		flows = append(flows, f)
@@ -63,6 +65,8 @@ type flowRequest struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
 	FlowJSON    json.RawMessage `json:"flow_json"`
+	FlowType    string          `json:"flow_type"`
+	ResourceURI string          `json:"resource_uri"`
 }
 
 func (h *flowsHandler) create(w http.ResponseWriter, r *http.Request) {
@@ -81,12 +85,15 @@ func (h *flowsHandler) create(w http.ResponseWriter, r *http.Request) {
 	if req.FlowJSON == nil {
 		req.FlowJSON = json.RawMessage(`{}`)
 	}
+	if req.FlowType == "" {
+		req.FlowType = "tool"
+	}
 
 	var f Flow
 	err := h.db.QueryRow(r.Context(),
-		`INSERT INTO flows (project_id, name, description, flow_json) VALUES ($1, $2, $3, $4) RETURNING id, project_id, name, COALESCE(description,''), flow_json, created_at, updated_at`,
-		projectID, req.Name, req.Description, req.FlowJSON,
-	).Scan(&f.ID, &f.ProjectID, &f.Name, &f.Description, &f.FlowJSON, &f.CreatedAt, &f.UpdatedAt)
+		`INSERT INTO flows (project_id, name, description, flow_json, flow_type, resource_uri) VALUES ($1, $2, $3, $4, $5, NULLIF($6,'')) RETURNING id, project_id, name, COALESCE(description,''), flow_json, COALESCE(flow_type,'tool'), COALESCE(resource_uri,''), created_at, updated_at`,
+		projectID, req.Name, req.Description, req.FlowJSON, req.FlowType, req.ResourceURI,
+	).Scan(&f.ID, &f.ProjectID, &f.Name, &f.Description, &f.FlowJSON, &f.FlowType, &f.ResourceURI, &f.CreatedAt, &f.UpdatedAt)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "could not create flow")
 		return
@@ -105,9 +112,9 @@ func (h *flowsHandler) get(w http.ResponseWriter, r *http.Request) {
 
 	var f Flow
 	err := h.db.QueryRow(r.Context(),
-		`SELECT id, project_id, name, COALESCE(description,''), flow_json, created_at, updated_at FROM flows WHERE id = $1 AND project_id = $2`,
+		`SELECT id, project_id, name, COALESCE(description,''), flow_json, COALESCE(flow_type,'tool'), COALESCE(resource_uri,''), created_at, updated_at FROM flows WHERE id = $1 AND project_id = $2`,
 		flowID, projectID,
-	).Scan(&f.ID, &f.ProjectID, &f.Name, &f.Description, &f.FlowJSON, &f.CreatedAt, &f.UpdatedAt)
+	).Scan(&f.ID, &f.ProjectID, &f.Name, &f.Description, &f.FlowJSON, &f.FlowType, &f.ResourceURI, &f.CreatedAt, &f.UpdatedAt)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "flow not found")
 		return
@@ -132,9 +139,9 @@ func (h *flowsHandler) update(w http.ResponseWriter, r *http.Request) {
 
 	var f Flow
 	err := h.db.QueryRow(r.Context(),
-		`UPDATE flows SET name = COALESCE(NULLIF($1,''), name), description = $2, flow_json = COALESCE($3, flow_json), updated_at = NOW() WHERE id = $4 AND project_id = $5 RETURNING id, project_id, name, COALESCE(description,''), flow_json, created_at, updated_at`,
-		req.Name, req.Description, req.FlowJSON, flowID, projectID,
-	).Scan(&f.ID, &f.ProjectID, &f.Name, &f.Description, &f.FlowJSON, &f.CreatedAt, &f.UpdatedAt)
+		`UPDATE flows SET name = COALESCE(NULLIF($1,''), name), description = $2, flow_json = COALESCE($3, flow_json), flow_type = COALESCE(NULLIF($4,''), flow_type), resource_uri = NULLIF($5,''), updated_at = NOW() WHERE id = $6 AND project_id = $7 RETURNING id, project_id, name, COALESCE(description,''), flow_json, COALESCE(flow_type,'tool'), COALESCE(resource_uri,''), created_at, updated_at`,
+		req.Name, req.Description, req.FlowJSON, req.FlowType, req.ResourceURI, flowID, projectID,
+	).Scan(&f.ID, &f.ProjectID, &f.Name, &f.Description, &f.FlowJSON, &f.FlowType, &f.ResourceURI, &f.CreatedAt, &f.UpdatedAt)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "flow not found")
 		return

@@ -6,6 +6,7 @@ import { NodePalette } from "./NodePalette";
 import { CreateFlowDialog } from "./CreateFlowDialog";
 import { TestPanel } from "./TestPanel";
 import { CredentialsPanel } from "./CredentialsPanel";
+import { FlowSettingsPanel } from "./FlowSettingsPanel";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, Save, Plus, Check, Play, KeyRound, ChevronDown, Trash2, AlertTriangle } from "lucide-react";
+import { ChevronLeft, Save, Plus, Check, Play, KeyRound, ChevronDown, Trash2, AlertTriangle, Settings2 } from "lucide-react";
 
 interface Props {
   project: Project;
@@ -40,6 +41,7 @@ export function FlowBuilder({ project, onBack }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
   const [credsOpen, setCredsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [nameError, setNameError] = useState(false);
@@ -193,7 +195,7 @@ export function FlowBuilder({ project, onBack }: Props) {
         <div className="flex-1" />
 
         <button
-          onClick={() => { setCredsOpen((v) => !v); setTestOpen(false); }}
+          onClick={() => { setCredsOpen((v) => !v); setTestOpen(false); setSettingsOpen(false); }}
           className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1 transition shrink-0 ${
             credsOpen
               ? "bg-zinc-800 border-zinc-600 text-zinc-100"
@@ -205,17 +207,30 @@ export function FlowBuilder({ project, onBack }: Props) {
         </button>
 
         {selectedFlow && (
-          <button
-            onClick={() => { setTestOpen((v) => !v); setCredsOpen(false); }}
-            className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1 transition shrink-0 ${
-              testOpen
-                ? "bg-zinc-800 border-zinc-600 text-zinc-100"
-                : "border-zinc-700 text-zinc-400 hover:text-zinc-100"
-            }`}
-          >
-            <Play size={12} />
-            Test
-          </button>
+          <>
+            <button
+              onClick={() => { setSettingsOpen((v) => !v); setTestOpen(false); setCredsOpen(false); }}
+              className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1 transition shrink-0 ${
+                settingsOpen
+                  ? "bg-zinc-800 border-zinc-600 text-zinc-100"
+                  : "border-zinc-700 text-zinc-400 hover:text-zinc-100"
+              }`}
+            >
+              <Settings2 size={12} />
+              Settings
+            </button>
+            <button
+              onClick={() => { setTestOpen((v) => !v); setCredsOpen(false); setSettingsOpen(false); }}
+              className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1 transition shrink-0 ${
+                testOpen
+                  ? "bg-zinc-800 border-zinc-600 text-zinc-100"
+                  : "border-zinc-700 text-zinc-400 hover:text-zinc-100"
+              }`}
+            >
+              <Play size={12} />
+              Test
+            </button>
+          </>
         )}
 
         <button
@@ -245,6 +260,14 @@ export function FlowBuilder({ project, onBack }: Props) {
 
         {credsOpen && (
           <CredentialsPanel project={project} onClose={() => setCredsOpen(false)} />
+        )}
+
+        {settingsOpen && selectedFlow && (
+          <FlowSettingsPanel
+            project={project}
+            flow={selectedFlow}
+            onClose={() => setSettingsOpen(false)}
+          />
         )}
 
         {testOpen && selectedFlow && (

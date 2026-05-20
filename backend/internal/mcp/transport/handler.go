@@ -19,13 +19,17 @@ func NewHandler(db *pgxpool.Pool) *Handler { return &Handler{db: db} }
 
 // Routes mounts MCP endpoints on r.
 //
-//   GET  /mcp/{slug}              — list tools (REST discovery)
-//   POST /mcp/{slug}/tools/call   — execute a tool (REST)
-//   GET  /mcp/{slug}/sse          — SSE stream (MCP protocol transport)
-//   POST /mcp/{slug}/message      — JSON-RPC messages from MCP client
+//   GET  /mcp/{slug}                  — list tools (REST discovery)
+//   POST /mcp/{slug}/tools/call       — execute a tool (REST)
+//   GET  /mcp/{slug}/resources        — list resources (REST)
+//   POST /mcp/{slug}/resources/read   — read a resource (REST)
+//   GET  /mcp/{slug}/sse              — SSE stream (MCP protocol transport)
+//   POST /mcp/{slug}/message          — JSON-RPC messages from MCP client
 func (h *Handler) Routes(r chi.Router) {
 	r.Get("/mcp/{slug}", h.listTools)
 	r.Post("/mcp/{slug}/tools/call", h.callTool)
+	r.Get("/mcp/{slug}/resources", h.listResources)
+	r.Post("/mcp/{slug}/resources/read", h.readResource)
 	r.Get("/mcp/{slug}/sse", h.sseConnect)
 	r.Post("/mcp/{slug}/message", h.sseMessage)
 }
@@ -54,14 +58,16 @@ func (h *Handler) projectBySlug(ctx context.Context, slug string) (*projectMeta,
 }
 
 type flowRow struct {
-	id       string
-	name     string
-	flowJSON []byte
+	id          string
+	name        string
+	flowJSON    []byte
+	flowType    string
+	resourceURI string
 }
 
 func (h *Handler) flowsForProject(ctx context.Context, projectID string) ([]flowRow, error) {
 	rows, err := h.db.Query(ctx,
-		`SELECT id, name, flow_json FROM flows WHERE project_id = $1`, projectID)
+		`SELECT id, name, flow_json, COALESCE(flow_type,'tool'), COALESCE(resource_uri,'') FROM flows WHERE project_id = $1`, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +76,7 @@ func (h *Handler) flowsForProject(ctx context.Context, projectID string) ([]flow
 	var out []flowRow
 	for rows.Next() {
 		var f flowRow
-		if err := rows.Scan(&f.id, &f.name, &f.flowJSON); err == nil {
+		if err := rows.Scan(&f.id, &f.name, &f.flowJSON, &f.flowType, &f.resourceURI); err == nil {
 			out = append(out, f)
 		}
 	}
@@ -92,8 +98,11 @@ func (h *Handler) listTools(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tools := make([]ToolDef, 0, len(flowRows))
+	tools := make([]ToolDef, 0)
 	for _, f := range flowRows {
+		if f.flowType != "tool" {
+			continue
+		}
 		var def mcp.FlowDef
 		if err := json.Unmarshal(f.flowJSON, &def); err != nil {
 			continue
@@ -198,6 +207,111 @@ func (h *Handler) logExecution(flowID string, input, output interface{}, execErr
 	h.db.Exec(ctx,
 		`INSERT INTO tool_executions (flow_id, input, output, error, duration_ms) VALUES ($1, $2, $3, $4, $5)`,
 		flowID, inputJSON, outputJSON, errStr, durationMS)
+}
+
+// ResourceDef is the MCP resource descriptor returned by the resources endpoint.
+type ResourceDef struct {
+	URI         string `json:"uri"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	MimeType    string `json:"mimeType"`
+}
+
+func (h *Handler) listResources(w http.ResponseWriter, r *http.Request) {
+	slug := chi.URLParam(r, "slug")
+
+	proj, err := h.projectBySlug(r.Context(), slug)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "project not found")
+		return
+	}
+
+	flowRows, err := h.flowsForProject(r.Context(), proj.id)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "db error")
+		return
+	}
+
+	resources := make([]ResourceDef, 0)
+	for _, f := range flowRows {
+		if f.flowType != "resource" || f.resourceURI == "" {
+			continue
+		}
+		var def mcp.FlowDef
+		if err := json.Unmarshal(f.flowJSON, &def); err != nil {
+			continue
+		}
+		resources = append(resources, ResourceDef{
+			URI:         f.resourceURI,
+			Name:        f.name,
+			Description: def.Description,
+			MimeType:    "application/json",
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{"resources": resources})
+}
+
+type readRequest struct {
+	URI string `json:"uri"`
+}
+
+func (h *Handler) readResource(w http.ResponseWriter, r *http.Request) {
+	slug := chi.URLParam(r, "slug")
+
+	var req readRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.URI == "" {
+		writeError(w, http.StatusBadRequest, "uri required")
+		return
+	}
+
+	proj, err := h.projectBySlug(r.Context(), slug)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "project not found")
+		return
+	}
+
+	flowRows, err := h.flowsForProject(r.Context(), proj.id)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "db error")
+		return
+	}
+
+	var matched *flowRow
+	for i, f := range flowRows {
+		if f.flowType == "resource" && f.resourceURI == req.URI {
+			matched = &flowRows[i]
+			break
+		}
+	}
+	if matched == nil {
+		writeError(w, http.StatusNotFound, "resource not found")
+		return
+	}
+
+	var def mcp.FlowDef
+	if err := json.Unmarshal(matched.flowJSON, &def); err != nil {
+		writeError(w, http.StatusInternalServerError, "invalid flow definition")
+		return
+	}
+
+	creds, _ := credentials.LoadDecrypted(r.Context(), h.db, proj.id)
+
+	start := time.Now()
+	result, execErr := runtime.Run(r.Context(), &def, map[string]interface{}{}, creds)
+	durationMS := int(time.Since(start).Milliseconds())
+	go h.logExecution(matched.id, map[string]interface{}{"uri": req.URI}, result, execErr, durationMS)
+
+	if execErr != nil {
+		writeError(w, http.StatusUnprocessableEntity, execErr.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"contents": []map[string]interface{}{
+			{"uri": req.URI, "mimeType": "application/json", "text": toText(result)},
+		},
+	})
 }
 
 func buildInputSchema(schema map[string]mcp.InputFieldDef) map[string]interface{} {
