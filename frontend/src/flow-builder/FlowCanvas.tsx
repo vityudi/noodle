@@ -38,6 +38,9 @@ const RF_TO_NOODLE: Record<string, string> = {
   loop:          "loop",
   merge:         "merge",
   script:        "script",
+  postgres:      "postgres",
+  mysql:         "mysql",
+  mongodb:       "mongodb",
 };
 
 const NOODLE_TO_RF: Record<string, string> = {
@@ -49,6 +52,9 @@ const NOODLE_TO_RF: Record<string, string> = {
   loop:           "loop",
   merge:          "merge",
   script:         "script",
+  postgres:       "postgres",
+  mysql:          "mysql",
+  mongodb:        "mongodb",
 };
 
 const DEFAULT_OUTPUTS: Record<string, Record<string, { type: string }>> = {
@@ -59,6 +65,9 @@ const DEFAULT_OUTPUTS: Record<string, Record<string, { type: string }>> = {
   loop:           { items: { type: "array" }, count: { type: "number" } },
   merge:          { result: { type: "object" } },
   script:         { result: { type: "any" } },
+  postgres:       { rows: { type: "array" }, row_count: { type: "number" }, rows_affected: { type: "number" } },
+  mysql:          { rows: { type: "array" }, row_count: { type: "number" }, rows_affected: { type: "number" }, last_insert_id: { type: "number" } },
+  mongodb:        { documents: { type: "array" }, count: { type: "number" }, document: { type: "object" } },
 };
 
 interface NoodleSchema {

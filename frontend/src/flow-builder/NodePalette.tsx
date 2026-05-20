@@ -1,4 +1,4 @@
-import { Globe, Braces, GitBranch, Zap, Box, Repeat, Combine, Code2 } from "lucide-react";
+import { Globe, Braces, GitBranch, Zap, Box, Repeat, Combine, Code2, Database } from "lucide-react";
 
 const NODES = [
   {
@@ -56,6 +56,27 @@ const NODES = [
     icon: Code2,
     color: "text-fuchsia-400",
     description: "Run custom JavaScript",
+  },
+  {
+    type: "postgres",
+    label: "PostgreSQL",
+    icon: Database,
+    color: "text-teal-400",
+    description: "Query a Postgres database",
+  },
+  {
+    type: "mysql",
+    label: "MySQL",
+    icon: Database,
+    color: "text-orange-400",
+    description: "Query a MySQL / MariaDB database",
+  },
+  {
+    type: "mongodb",
+    label: "MongoDB",
+    icon: Database,
+    color: "text-green-400",
+    description: "Operate on a MongoDB collection",
   },
 ];
 

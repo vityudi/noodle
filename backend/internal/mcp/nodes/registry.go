@@ -16,4 +16,7 @@ var Registry = map[string]Node{
 	"loop":           &LoopNode{},
 	"merge":          &MergeNode{},
 	"script":         &ScriptNode{},
+	"postgres":       &PostgreSQLNode{},
+	"mysql":          &MySQLNode{},
+	"mongodb":        &MongoDBNode{},
 }

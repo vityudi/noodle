@@ -118,6 +118,25 @@ export const templatesApi = {
   list: () => api.get<FlowTemplate[]>("/api/templates").then((r) => r.data),
 };
 
+export interface SuggestedFlow {
+  name: string;
+  description: string;
+  method: string;
+  path: string;
+  flow_json: object;
+}
+
+export interface OpenAPIPreview {
+  title: string;
+  base_url: string;
+  endpoints: SuggestedFlow[];
+}
+
+export const openAPIApi = {
+  preview: (projectId: string, data: { url?: string; spec?: string }) =>
+    api.post<OpenAPIPreview>(`/api/projects/${projectId}/import/openapi`, data).then((r) => r.data),
+};
+
 export const aiApi = {
   generate: (projectId: string, message: string, currentFlow?: object) =>
     api

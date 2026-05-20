@@ -17,6 +17,9 @@ const TYPE_LABELS: Record<string, string> = {
   loop:          "Loop",
   merge:         "Merge",
   script:        "Script (JS)",
+  postgres:      "PostgreSQL",
+  mysql:         "MySQL",
+  mongodb:       "MongoDB",
 };
 
 export function NodePropertiesPanel({ node, onUpdate, onClose }: Props) {

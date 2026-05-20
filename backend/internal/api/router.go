@@ -75,6 +75,9 @@ func NewRouter(db *pgxpool.Pool, devMode bool) http.Handler {
 		aiFlow := &aiFlowHandler{db: db}
 		r.Post("/api/projects/{projectID}/ai/generate", aiFlow.generate)
 
+		oasImport := &openAPIImportHandler{db: db}
+		r.Post("/api/projects/{projectID}/import/openapi", oasImport.preview)
+
 		sett := settingsHandlerFor(db)
 		r.Route("/api/settings", func(r chi.Router) {
 			r.Get("/ai", sett.getAI)

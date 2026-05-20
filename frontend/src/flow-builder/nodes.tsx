@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
-import { Globe, Braces, GitBranch, Zap, Trash2, Box, Repeat, Combine, Code2 } from "lucide-react";
+import { Globe, Braces, GitBranch, Zap, Trash2, Box, Repeat, Combine, Code2, Database } from "lucide-react";
 
 function DeleteButton({ id }: { id: string }) {
   const { deleteElements } = useReactFlow();
@@ -268,6 +268,67 @@ export const ScriptNode = memo(({ id, data, selected }: NodeProps) => {
 });
 ScriptNode.displayName = "ScriptNode";
 
+// ── postgres ───────────────────────────────────────────────────────────────
+export const PostgresNode = memo(({ id, data, selected }: NodeProps) => {
+  const d = data as { label?: string; config?: { query?: string } };
+  const preview = d.config?.query?.split("\n")[0] ?? "";
+  return (
+    <NodeCard
+      id={id}
+      accent="bg-teal-500/15" iconColor="text-teal-400"
+      icon={<Database size={13} />}
+      label={d.label ?? "PostgreSQL"}
+      selected={!!selected} ring="border-teal-500/50 shadow-teal-900/20"
+    >
+      {preview
+        ? <span className="font-mono truncate text-zinc-500 block max-w-[170px]">{preview}</span>
+        : <span className="text-zinc-600 italic">No query defined</span>}
+    </NodeCard>
+  );
+});
+PostgresNode.displayName = "PostgresNode";
+
+// ── mysql ──────────────────────────────────────────────────────────────────
+export const MySQLNode = memo(({ id, data, selected }: NodeProps) => {
+  const d = data as { label?: string; config?: { query?: string } };
+  const preview = d.config?.query?.split("\n")[0] ?? "";
+  return (
+    <NodeCard
+      id={id}
+      accent="bg-orange-500/15" iconColor="text-orange-400"
+      icon={<Database size={13} />}
+      label={d.label ?? "MySQL"}
+      selected={!!selected} ring="border-orange-500/50 shadow-orange-900/20"
+    >
+      {preview
+        ? <span className="font-mono truncate text-zinc-500 block max-w-[170px]">{preview}</span>
+        : <span className="text-zinc-600 italic">No query defined</span>}
+    </NodeCard>
+  );
+});
+MySQLNode.displayName = "MySQLNode";
+
+// ── mongodb ────────────────────────────────────────────────────────────────
+export const MongoDBNode = memo(({ id, data, selected }: NodeProps) => {
+  const d = data as { label?: string; config?: { operation?: string; collection?: string } };
+  const op = d.config?.operation ?? "";
+  const col = d.config?.collection ?? "";
+  return (
+    <NodeCard
+      id={id}
+      accent="bg-green-500/15" iconColor="text-green-400"
+      icon={<Database size={13} />}
+      label={d.label ?? "MongoDB"}
+      selected={!!selected} ring="border-green-500/50 shadow-green-900/20"
+    >
+      {op
+        ? <span className="text-zinc-500">{op}{col ? ` · ${col}` : ""}</span>
+        : <span className="text-zinc-600 italic">No operation defined</span>}
+    </NodeCard>
+  );
+});
+MongoDBNode.displayName = "MongoDBNode";
+
 // ── registry ───────────────────────────────────────────────────────────────
 export const nodeTypes = {
   trigger:       TriggerNode,
@@ -278,6 +339,9 @@ export const nodeTypes = {
   loop:          LoopNode,
   merge:         MergeNode,
   script:        ScriptNode,
+  postgres:      PostgresNode,
+  mysql:         MySQLNode,
+  mongodb:       MongoDBNode,
 };
 
 export function defaultNodeData(type: string): Record<string, unknown> {
@@ -290,6 +354,9 @@ export function defaultNodeData(type: string): Record<string, unknown> {
     case "loop":          return { label: "Loop",           config: { items: "", field: "" } };
     case "merge":         return { label: "Merge",          config: {} };
     case "script":        return { label: "Script",         config: { code: "// input is available\nreturn input", input: "" } };
+    case "postgres":      return { label: "PostgreSQL",     config: { connection_string: "{{credentials.mydb.url}}", query: "SELECT * FROM table_name WHERE id = $1", params: ["{{input.id}}"] } };
+    case "mysql":         return { label: "MySQL",          config: { connection_string: "{{credentials.mydb.url}}", query: "SELECT * FROM table_name WHERE id = ?", params: ["{{input.id}}"] } };
+    case "mongodb":       return { label: "MongoDB",        config: { connection_string: "{{credentials.mydb.url}}", database: "mydb", collection: "my_collection", operation: "find", filter: {}, limit: 10 } };
     default:              return { label: type, config: {} };
   }
 }
