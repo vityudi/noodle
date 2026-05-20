@@ -1,6 +1,18 @@
 import { memo } from "react";
-import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Globe, Braces, GitBranch, Zap } from "lucide-react";
+import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
+import { Globe, Braces, GitBranch, Zap, Trash2 } from "lucide-react";
+
+function DeleteButton({ id }: { id: string }) {
+  const { deleteElements } = useReactFlow();
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); deleteElements({ nodes: [{ id }] }); }}
+      className="opacity-0 group-hover:opacity-100 transition-opacity ml-auto p-0.5 rounded text-zinc-600 hover:text-zinc-100 hover:bg-white/10"
+    >
+      <Trash2 size={11} />
+    </button>
+  );
+}
 
 // ── handle style ───────────────────────────────────────────────────────────
 const handle =
@@ -8,21 +20,22 @@ const handle =
 
 // ── shared card shell ──────────────────────────────────────────────────────
 interface CardProps {
-  accent: string;        // tailwind bg class for the icon bg
-  iconColor: string;     // tailwind text class
+  id: string;
+  accent: string;
+  iconColor: string;
   icon: React.ReactNode;
   label: string;
   selected: boolean;
-  ring: string;          // selected ring color class
+  ring: string;
   children?: React.ReactNode;
   extraHandles?: React.ReactNode;
 }
 
-function NodeCard({ accent, iconColor, icon, label, selected, ring, children, extraHandles }: CardProps) {
+function NodeCard({ id, accent, iconColor, icon, label, selected, ring, children, extraHandles }: CardProps) {
   return (
     <div
       className={`
-        relative min-w-[210px] rounded-xl shadow-xl
+        group relative min-w-[210px] rounded-xl shadow-xl
         border bg-[#18181b]
         transition-all duration-150
         ${selected
@@ -35,9 +48,10 @@ function NodeCard({ accent, iconColor, icon, label, selected, ring, children, ex
         <span className={`flex items-center justify-center w-6 h-6 rounded-md ${accent} ${iconColor} shrink-0`}>
           {icon}
         </span>
-        <span className="text-[13px] font-semibold text-zinc-100 leading-none truncate">
+        <span className="text-[13px] font-semibold text-zinc-100 leading-none truncate flex-1">
           {label}
         </span>
+        <DeleteButton id={id} />
       </div>
 
       {/* body */}
@@ -64,12 +78,12 @@ function NodeCard({ accent, iconColor, icon, label, selected, ring, children, ex
 }
 
 // ── trigger ────────────────────────────────────────────────────────────────
-export const TriggerNode = memo(({ data, selected }: NodeProps) => {
+export const TriggerNode = memo(({ id, data, selected }: NodeProps) => {
   const d = data as { label?: string; config?: { description?: string } };
   return (
     <div
       className={`
-        relative min-w-[210px] rounded-xl shadow-xl border bg-[#18181b]
+        group relative min-w-[210px] rounded-xl shadow-xl border bg-[#18181b]
         transition-all duration-150
         ${selected ? "border-violet-500/60 shadow-violet-900/30" : "border-white/[0.07] hover:border-white/[0.14]"}
       `}
@@ -78,9 +92,10 @@ export const TriggerNode = memo(({ data, selected }: NodeProps) => {
         <span className="flex items-center justify-center w-6 h-6 rounded-md bg-violet-500/20 text-violet-400 shrink-0">
           <Zap size={13} />
         </span>
-        <span className="text-[13px] font-semibold text-zinc-100 leading-none">
+        <span className="text-[13px] font-semibold text-zinc-100 leading-none flex-1">
           {d.label ?? "Trigger"}
         </span>
+        <DeleteButton id={id} />
       </div>
       {d.config?.description && (
         <div className="px-3 pb-2.5 text-[11px] text-zinc-400 border-t border-white/[0.05] pt-2">
@@ -94,7 +109,7 @@ export const TriggerNode = memo(({ data, selected }: NodeProps) => {
 TriggerNode.displayName = "TriggerNode";
 
 // ── http request ───────────────────────────────────────────────────────────
-export const HttpRequestNode = memo(({ data, selected }: NodeProps) => {
+export const HttpRequestNode = memo(({ id, data, selected }: NodeProps) => {
   const d = data as { label?: string; config?: { url?: string; method?: string } };
   const method = d.config?.method ?? "GET";
   const url = d.config?.url ?? "";
@@ -106,6 +121,7 @@ export const HttpRequestNode = memo(({ data, selected }: NodeProps) => {
 
   return (
     <NodeCard
+      id={id}
       accent="bg-sky-500/15" iconColor="text-sky-400"
       icon={<Globe size={13} />}
       label={d.label ?? "HTTP Request"}
@@ -121,11 +137,12 @@ export const HttpRequestNode = memo(({ data, selected }: NodeProps) => {
 HttpRequestNode.displayName = "HttpRequestNode";
 
 // ── json transform ─────────────────────────────────────────────────────────
-export const JsonTransformNode = memo(({ data, selected }: NodeProps) => {
+export const JsonTransformNode = memo(({ id, data, selected }: NodeProps) => {
   const d = data as { label?: string; config?: { mapping?: object } };
   const keys = Object.keys(d.config?.mapping ?? {});
   return (
     <NodeCard
+      id={id}
       accent="bg-amber-500/15" iconColor="text-amber-400"
       icon={<Braces size={13} />}
       label={d.label ?? "JSON Transform"}
@@ -140,13 +157,14 @@ export const JsonTransformNode = memo(({ data, selected }: NodeProps) => {
 JsonTransformNode.displayName = "JsonTransformNode";
 
 // ── condition ──────────────────────────────────────────────────────────────
-export const ConditionNode = memo(({ data, selected }: NodeProps) => {
+export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
   const d = data as { label?: string; config?: { left?: string; operator?: string; right?: string } };
   const preview = d.config?.left
     ? `${d.config.left} ${d.config.operator ?? "?"} ${d.config.right ?? ""}`
     : "No condition set";
   return (
     <NodeCard
+      id={id}
       accent="bg-emerald-500/15" iconColor="text-emerald-400"
       icon={<GitBranch size={13} />}
       label={d.label ?? "Condition"}

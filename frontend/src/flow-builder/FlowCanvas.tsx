@@ -24,6 +24,7 @@ interface Props {
   projectId: string;
   saveRef: React.MutableRefObject<() => Promise<void>>;
   loadRef: React.MutableRefObject<(schema: object) => void>;
+  schemaRef?: React.MutableRefObject<() => object>;
 }
 
 // --- Schema conversion helpers ---
@@ -186,7 +187,7 @@ function autoLayout(nodes: Node[], edges: Edge[]): Node[] {
   return nodes.map((n) => ({ ...n, position: posMap[n.id] ?? n.position }));
 }
 
-export function FlowCanvas({ flow, projectId, saveRef, loadRef }: Props) {
+export function FlowCanvas({ flow, projectId, saveRef, loadRef, schemaRef }: Props) {
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
@@ -229,7 +230,10 @@ export function FlowCanvas({ flow, projectId, saveRef, loadRef }: Props) {
       const schema = toNoodleSchema(flow.name, nodes, edges);
       await flowsApi.update(projectId, flow.id, { flow_json: schema });
     };
-  }, [nodes, edges, flow.id, flow.name, projectId, saveRef]);
+    if (schemaRef) {
+      schemaRef.current = () => toNoodleSchema(flow.name, nodes, edges);
+    }
+  }, [nodes, edges, flow.id, flow.name, projectId, saveRef, schemaRef]);
 
   const onDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
