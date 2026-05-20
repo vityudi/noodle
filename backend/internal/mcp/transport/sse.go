@@ -261,7 +261,8 @@ func (h *Handler) handleRPC(ctx context.Context, sess *session, req jsonRPCReque
 			return
 		}
 		creds, _ := credentials.LoadDecrypted(ctx, h.db, proj.id)
-		result, execErr := runtime.Run(ctx, &def, map[string]interface{}{}, creds)
+		envVars, _ := credentials.LoadEnvVars(ctx, h.db, proj.id)
+		result, execErr := runtime.Run(ctx, &def, map[string]interface{}{}, creds, envVars)
 		if execErr != nil {
 			h.sendRPC(sess, req.ID, nil, rpcErr(-32603, execErr.Error()))
 			return
@@ -317,9 +318,10 @@ func (h *Handler) handleRPC(ctx context.Context, sess *session, req jsonRPCReque
 		}
 
 		creds, _ := credentials.LoadDecrypted(ctx, h.db, proj.id)
+		envVars, _ := credentials.LoadEnvVars(ctx, h.db, proj.id)
 
 		start := time.Now()
-		result, execErr := runtime.Run(ctx, &def, input, creds)
+		result, execErr := runtime.Run(ctx, &def, input, creds, envVars)
 		durationMS := int(time.Since(start).Milliseconds())
 		go h.logExecution(matched.id, input, result, execErr, durationMS)
 

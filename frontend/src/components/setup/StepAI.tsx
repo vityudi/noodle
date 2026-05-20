@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { setupApi } from "@/lib/api";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const PROVIDERS = [
   { id: "anthropic", label: "Anthropic", placeholder: "sk-ant-…", models: ["claude-sonnet-4-6", "claude-opus-4-7", "claude-haiku-4-5-20251001"] },
@@ -83,15 +84,18 @@ export function StepAI({ onDone }: Props) {
 
         <div>
           <label className="block text-sm text-zinc-300 mb-1">Model</label>
-          <select
-            value={model || current.models[0]}
-            onChange={(e) => setModel(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-100 text-sm focus:outline-none focus:border-zinc-500"
-          >
-            {current.models.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
+          <Select value={model || current.models[0]} onValueChange={setModel}>
+            <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100 text-sm h-9 focus:ring-zinc-600 focus:ring-offset-zinc-900">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-800 border-zinc-700 text-zinc-100">
+              {current.models.map((m) => (
+                <SelectItem key={m} value={m} className="text-zinc-100 focus:bg-zinc-700 focus:text-zinc-100">
+                  {m}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {error && <p className="text-red-400 text-sm">{error}</p>}

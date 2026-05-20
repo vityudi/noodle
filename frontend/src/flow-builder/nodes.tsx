@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
-import { Globe, Braces, GitBranch, Zap, Trash2, Box, Repeat, Combine, Code2, Database } from "lucide-react";
+import { Globe, Braces, GitBranch, Zap, Trash2, Box, Repeat, Combine, Code2, Database, Bot } from "lucide-react";
 
 function DeleteButton({ id }: { id: string }) {
   const { deleteElements } = useReactFlow();
@@ -78,30 +78,63 @@ function NodeCard({ id, accent, iconColor, icon, label, selected, ring, children
 }
 
 // ── trigger ────────────────────────────────────────────────────────────────
+interface TriggerInput { name: string; type: string; required?: boolean }
+
 export const TriggerNode = memo(({ id, data, selected }: NodeProps) => {
-  const d = data as { label?: string; config?: { description?: string } };
+  const d = data as { label?: string; config?: { description?: string; inputs?: TriggerInput[] } };
+  const inputs = d.config?.inputs ?? [];
+
   return (
     <div
       className={`
-        group relative min-w-[210px] rounded-xl shadow-xl border bg-[#18181b]
+        group relative min-w-[230px] rounded-xl shadow-xl border bg-[#18181b]
         transition-all duration-150
         ${selected ? "border-violet-500/60 shadow-violet-900/30" : "border-white/[0.07] hover:border-white/[0.14]"}
       `}
     >
-      <div className="flex items-center gap-2.5 px-3 py-2.5">
+      {/* AI badge */}
+      <div className="flex items-center gap-1.5 px-3 pt-2 pb-0">
+        <Bot size={10} className="text-violet-500" />
+        <span className="text-[10px] text-violet-500 font-medium uppercase tracking-wider">AI Tool Entry</span>
+      </div>
+
+      <div className="flex items-center gap-2.5 px-3 py-2">
         <span className="flex items-center justify-center w-6 h-6 rounded-md bg-violet-500/20 text-violet-400 shrink-0">
           <Zap size={13} />
         </span>
-        <span className="text-[13px] font-semibold text-zinc-100 leading-none flex-1">
+        <span className="text-[13px] font-semibold text-zinc-100 leading-none flex-1 truncate">
           {d.label ?? "Trigger"}
         </span>
         <DeleteButton id={id} />
       </div>
-      {d.config?.description && (
-        <div className="px-3 pb-2.5 text-[11px] text-zinc-400 border-t border-white/[0.05] pt-2">
-          {d.config.description}
+
+      {(d.config?.description || inputs.length > 0) && (
+        <div className="px-3 pb-2.5 border-t border-white/[0.05] pt-2 space-y-1.5">
+          {d.config?.description && (
+            <p className="text-[11px] text-zinc-500 leading-snug line-clamp-2">
+              {d.config.description}
+            </p>
+          )}
+          {inputs.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {inputs.map((p, i) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center gap-1 bg-violet-500/10 border border-violet-500/20 text-violet-300 text-[10px] font-mono px-1.5 py-0.5 rounded"
+                >
+                  {p.name}
+                  <span className="text-violet-500 opacity-60">{p.type}</span>
+                  {p.required && <span className="text-violet-400">*</span>}
+                </span>
+              ))}
+            </div>
+          )}
+          {inputs.length === 0 && !d.config?.description && (
+            <p className="text-[11px] text-zinc-700 italic">Click to configure</p>
+          )}
         </div>
       )}
+
       <Handle type="source" position={Position.Bottom} className={`${handle} !bg-violet-600 !border-violet-400`} />
     </div>
   );

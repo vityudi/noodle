@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { settingsApi } from "@/lib/api";
 import { Check } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const PROVIDERS = [
   { value: "anthropic", label: "Anthropic", models: ["claude-sonnet-4-6", "claude-opus-4-7", "claude-haiku-4-5-20251001"] },
@@ -46,28 +47,34 @@ export function SettingsPage() {
         <div className="space-y-4">
           <div>
             <label className="block text-xs text-zinc-400 mb-1.5 font-medium">Provider</label>
-            <select
-              value={effectiveProvider}
-              onChange={(e) => { setProvider(e.target.value); setModel(""); }}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-zinc-500"
-            >
-              {PROVIDERS.map((p) => (
-                <option key={p.value} value={p.value}>{p.label}</option>
-              ))}
-            </select>
+            <Select value={effectiveProvider} onValueChange={(v) => { setProvider(v); setModel(""); }}>
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100 text-sm h-9 focus:ring-zinc-600 focus:ring-offset-zinc-900">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                {PROVIDERS.map((p) => (
+                  <SelectItem key={p.value} value={p.value} className="text-zinc-100 focus:bg-zinc-700 focus:text-zinc-100">
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <label className="block text-xs text-zinc-400 mb-1.5 font-medium">Model</label>
-            <select
-              value={effectiveModel}
-              onChange={(e) => setModel(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-zinc-500"
-            >
-              {providerDef?.models.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
+            <Select value={effectiveModel} onValueChange={setModel}>
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100 text-sm h-9 focus:ring-zinc-600 focus:ring-offset-zinc-900">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                {providerDef?.models.map((m) => (
+                  <SelectItem key={m} value={m} className="text-zinc-100 focus:bg-zinc-700 focus:text-zinc-100">
+                    {m}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {current?.model && (
               <p className="text-xs text-zinc-600 mt-1">Current: {current.model}</p>
             )}

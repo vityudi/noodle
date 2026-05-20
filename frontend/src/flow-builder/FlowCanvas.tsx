@@ -322,6 +322,7 @@ export function FlowCanvas({ flow, projectId, saveRef, loadRef, schemaRef }: Pro
       {selectedNode && (
         <NodePropertiesPanel
           node={selectedNode}
+          projectId={projectId}
           onUpdate={updateNodeData}
           onClose={() => setSelectedNodeId(null)}
         />

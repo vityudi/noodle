@@ -173,12 +173,17 @@ func (h *Handler) callTool(w http.ResponseWriter, r *http.Request) {
 	// Load project credentials so flows can use {{credentials.name.field}}.
 	creds, err := credentials.LoadDecrypted(r.Context(), h.db, proj.id)
 	if err != nil {
-		// Non-fatal: proceed without credentials — runtime will leave unresolved refs as-is.
 		creds = nil
 	}
 
+	// Load project env vars so flows can use {{env.KEY}}.
+	envVars, err := credentials.LoadEnvVars(r.Context(), h.db, proj.id)
+	if err != nil {
+		envVars = nil
+	}
+
 	start := time.Now()
-	result, execErr := runtime.Run(r.Context(), &def, input, creds)
+	result, execErr := runtime.Run(r.Context(), &def, input, creds, envVars)
 	durationMS := int(time.Since(start).Milliseconds())
 
 	// Persist execution log.
@@ -296,9 +301,10 @@ func (h *Handler) readResource(w http.ResponseWriter, r *http.Request) {
 	}
 
 	creds, _ := credentials.LoadDecrypted(r.Context(), h.db, proj.id)
+	envVars, _ := credentials.LoadEnvVars(r.Context(), h.db, proj.id)
 
 	start := time.Now()
-	result, execErr := runtime.Run(r.Context(), &def, map[string]interface{}{}, creds)
+	result, execErr := runtime.Run(r.Context(), &def, map[string]interface{}{}, creds, envVars)
 	durationMS := int(time.Since(start).Milliseconds())
 	go h.logExecution(matched.id, map[string]interface{}{"uri": req.URI}, result, execErr, durationMS)
 

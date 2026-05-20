@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { aiApi, flowsApi, projectsApi, type Project } from "@/lib/api";
 import { Sparkles, ChevronRight } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const EXAMPLES = [
   "Fetch a customer by email from my REST API and return their name and plan",
@@ -80,19 +81,18 @@ export function AIPage({ onOpenProject }: Props) {
           {/* Project selector */}
           <div>
             <label className="block text-xs text-zinc-400 mb-1.5 font-medium">Project</label>
-            <select
-              value={selectedProject?.id ?? ""}
-              onChange={(e) => setProjectId(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-zinc-600"
-            >
-              {projects.length === 0 ? (
-                <option value="">No projects yet</option>
-              ) : (
-                projects.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))
-              )}
-            </select>
+            <Select value={selectedProject?.id ?? ""} onValueChange={setProjectId}>
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100 text-sm h-9 focus:ring-zinc-600 focus:ring-offset-zinc-900">
+                <SelectValue placeholder="No projects yet" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                {projects.map((p) => (
+                  <SelectItem key={p.id} value={p.id} className="text-zinc-100 focus:bg-zinc-700 focus:text-zinc-100">
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Description */}

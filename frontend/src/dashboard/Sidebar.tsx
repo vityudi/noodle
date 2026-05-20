@@ -1,23 +1,33 @@
-import { FolderOpen, FileCode2, ScrollText, Settings, LogOut, ChevronRight, Layers } from "lucide-react";
+import { FolderOpen, FileCode2, ScrollText, Settings, LogOut, ChevronRight, Code2, KeyRound, SlidersHorizontal, Download } from "lucide-react";
 import type { Project } from "@/lib/api";
+import type { ProjectTab } from "@/dashboard/ProjectPage";
 
 export type SidebarPage = "projects" | "logs" | "schema" | "settings" | "templates";
 
 interface Props {
   active: SidebarPage;
   activeProject?: Project | null;
+  inBuilder?: boolean;
+  projectTab?: ProjectTab;
   onNavigate: (page: SidebarPage) => void;
+  onProjectTabChange?: (tab: ProjectTab) => void;
   onLogout: () => void;
 }
 
 const NAV: Array<{ id: SidebarPage; label: string; icon: React.ElementType }> = [
-  { id: "projects",  label: "Projects",  icon: FolderOpen },
-  { id: "templates", label: "Templates", icon: Layers     },
-  { id: "logs",      label: "Logs",      icon: ScrollText },
-  { id: "schema",    label: "Schema",    icon: FileCode2  },
+  { id: "projects", label: "Projects", icon: FolderOpen },
+  { id: "logs",     label: "Logs",     icon: ScrollText },
+  { id: "schema",   label: "Schema",   icon: FileCode2  },
 ];
 
-export function Sidebar({ active, activeProject, onNavigate, onLogout }: Props) {
+const PROJECT_TABS: Array<{ id: ProjectTab; label: string; icon: React.ElementType }> = [
+  { id: "flows",       label: "Flows",       icon: Code2             },
+  { id: "credentials", label: "Credentials", icon: KeyRound          },
+  { id: "environment", label: "Environment", icon: SlidersHorizontal },
+  { id: "import",      label: "Import",      icon: Download          },
+];
+
+export function Sidebar({ active, activeProject, inBuilder, projectTab, onNavigate, onProjectTabChange, onLogout }: Props) {
   return (
     <aside className="w-56 shrink-0 bg-zinc-900 border-r border-zinc-800 flex flex-col h-full">
       {/* Logo */}
@@ -48,11 +58,39 @@ export function Sidebar({ active, activeProject, onNavigate, onLogout }: Props) 
                 {label}
               </button>
 
-              {/* Active project breadcrumb under Projects */}
+              {/* Project context */}
               {isProjectsWithActive && (
-                <div className="ml-3 mt-0.5 flex items-center gap-1.5 px-3 py-1.5">
-                  <ChevronRight size={11} className="text-zinc-600 shrink-0" />
-                  <span className="text-xs text-zinc-400 truncate">{activeProject.name}</span>
+                <div className="ml-3 mt-1 space-y-0.5">
+                  {/* Project name breadcrumb */}
+                  <div className="flex items-center gap-1.5 px-3 py-1">
+                    <ChevronRight size={11} className="text-zinc-600 shrink-0" />
+                    <span className="text-xs text-zinc-400 truncate font-medium">{activeProject.name}</span>
+                  </div>
+
+                  {/* Project sub-nav — clickable tabs */}
+                  <div className="ml-2 space-y-0.5">
+                    {inBuilder ? (
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-zinc-500 bg-zinc-800/50">
+                        <Code2 size={12} />
+                        Flow builder
+                      </div>
+                    ) : (
+                      PROJECT_TABS.map(({ id: tabId, label: tabLabel, icon: TabIcon }) => (
+                        <button
+                          key={tabId}
+                          onClick={() => onProjectTabChange?.(tabId)}
+                          className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition text-left ${
+                            projectTab === tabId
+                              ? "bg-zinc-800 text-zinc-200"
+                              : "text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800/50"
+                          }`}
+                        >
+                          <TabIcon size={12} />
+                          {tabLabel}
+                        </button>
+                      ))
+                    )}
+                  </div>
                 </div>
               )}
             </div>

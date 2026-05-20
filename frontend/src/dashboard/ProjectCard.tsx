@@ -162,7 +162,7 @@ export function ProjectCard({ project, onDelete, onOpen }: Props) {
           onClick={() => onOpen(project)}
           className="mt-2 w-full flex items-center justify-center gap-2 border border-zinc-700 text-zinc-300 text-sm rounded-lg py-2 hover:bg-zinc-800 hover:text-zinc-100 transition"
         >
-          Open flow builder
+          Open project
           <ArrowRight size={14} />
         </button>
       </div>

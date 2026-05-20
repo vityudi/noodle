@@ -4,11 +4,20 @@ import { api, setupApi, type Project, type SetupStatus } from "@/lib/api";
 import { SetupWizard } from "@/components/setup/SetupWizard";
 import { LoginPage } from "@/components/LoginPage";
 import { Dashboard } from "@/dashboard/Dashboard";
+import { ProjectPage, type ProjectTab } from "@/dashboard/ProjectPage";
 import { FlowBuilder } from "@/flow-builder/FlowBuilder";
 import { Sidebar, type SidebarPage } from "@/dashboard/Sidebar";
 import { GlobalAIChat } from "@/components/GlobalAIChat";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30 * 1000,   // dados são "fresh" por 30s — navegação entre abas não refaz fetch
+      gcTime:    5 * 60 * 1000, // cache mantido por 5 min após última use
+      retry: 1,
+    },
+  },
+});
 
 type AuthState = "loading" | "setup" | "login" | "authenticated";
 
@@ -16,6 +25,8 @@ function AppRoutes() {
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [page, setPage] = useState<SidebarPage>("projects");
   const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const [inBuilder, setInBuilder] = useState(false);
+  const [projectTab, setProjectTab] = useState<ProjectTab>("flows");
 
   useEffect(() => {
     const devMode = import.meta.env.VITE_DEV_MODE === "true";
@@ -51,15 +62,28 @@ function AppRoutes() {
   function handleNavigate(p: SidebarPage) {
     setPage(p);
     setActiveProject(null);
+    setInBuilder(false);
   }
 
   function handleOpenProject(project: Project) {
     setActiveProject(project);
+    setInBuilder(false);
+    setProjectTab("flows");
   }
 
   function handleCloseProject() {
     setActiveProject(null);
+    setInBuilder(false);
+    setProjectTab("flows");
     setPage("projects");
+  }
+
+  function handleOpenBuilder() {
+    setInBuilder(true);
+  }
+
+  function handleCloseBuilder() {
+    setInBuilder(false);
   }
 
   if (authState === "loading") {
@@ -78,13 +102,24 @@ function AppRoutes() {
       <Sidebar
         active={page}
         activeProject={activeProject}
+        inBuilder={inBuilder}
+        projectTab={projectTab}
         onNavigate={handleNavigate}
+        onProjectTabChange={setProjectTab}
         onLogout={handleLogout}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        {activeProject ? (
-          <FlowBuilder project={activeProject} onBack={handleCloseProject} />
+        {activeProject && inBuilder ? (
+          <FlowBuilder project={activeProject} onBack={handleCloseBuilder} />
+        ) : activeProject ? (
+          <ProjectPage
+            project={activeProject}
+            tab={projectTab}
+            onTabChange={setProjectTab}
+            onBack={handleCloseProject}
+            onOpenBuilder={handleOpenBuilder}
+          />
         ) : (
           <Dashboard page={page} onOpenProject={handleOpenProject} />
         )}

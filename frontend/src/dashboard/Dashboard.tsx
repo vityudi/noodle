@@ -6,7 +6,6 @@ import { CreateProjectDialog } from "./CreateProjectDialog";
 import { SchemaPage } from "./SchemaPage";
 import { LogsPage } from "./LogsPage";
 import { SettingsPage } from "./SettingsPage";
-import { TemplatesPage } from "./TemplatesPage";
 import { type SidebarPage } from "./Sidebar";
 import { Plus } from "lucide-react";
 
@@ -22,6 +21,7 @@ const PAGE_META: Record<SidebarPage, { title: string; subtitle: string }> = {
   schema:    { title: "Flow Schema",    subtitle: "Public JSON Schema spec for the Noodle flow format." },
   settings:  { title: "Settings",       subtitle: "Configure the AI assistant and other instance settings." },
 };
+// Note: "templates" kept in PAGE_META for backwards compat but no longer in sidebar nav
 
 export function Dashboard({ page, onOpenProject }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -98,7 +98,6 @@ export function Dashboard({ page, onOpenProject }: Props) {
             </>
           )}
 
-          {page === "templates" && <TemplatesPage />}
           {page === "logs"      && <LogsPage />}
           {page === "schema"    && <SchemaPage />}
           {page === "settings"  && <SettingsPage />}

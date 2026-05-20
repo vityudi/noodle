@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS settings;
 DROP TABLE IF EXISTS tool_executions;
+DROP TABLE IF EXISTS env_variables;
 DROP TABLE IF EXISTS credentials;
 DROP TABLE IF EXISTS flows;
 DROP TABLE IF EXISTS mcp_projects;

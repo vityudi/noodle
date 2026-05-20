@@ -5,9 +5,7 @@ import { FlowCanvas } from "./FlowCanvas";
 import { NodePalette } from "./NodePalette";
 import { CreateFlowDialog } from "./CreateFlowDialog";
 import { TestPanel } from "./TestPanel";
-import { CredentialsPanel } from "./CredentialsPanel";
 import { FlowSettingsPanel } from "./FlowSettingsPanel";
-import { OpenAPIImportModal } from "./OpenAPIImportModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, Save, Plus, Check, Play, KeyRound, ChevronDown, Trash2, AlertTriangle, Settings2, FileJson } from "lucide-react";
+import { ChevronLeft, Save, Plus, Check, Play, ChevronDown, Trash2, AlertTriangle, Settings2 } from "lucide-react";
 
 interface Props {
   project: Project;
@@ -41,9 +39,7 @@ export function FlowBuilder({ project, onBack }: Props) {
   const [saved, setSaved] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
-  const [credsOpen, setCredsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [nameError, setNameError] = useState(false);
@@ -68,6 +64,8 @@ export function FlowBuilder({ project, onBack }: Props) {
     name: draftName,
     description: "",
     flow_json: {},
+    flow_type: "tool",
+    resource_uri: "",
     created_at: "",
     updated_at: "",
   };
@@ -196,31 +194,10 @@ export function FlowBuilder({ project, onBack }: Props) {
 
         <div className="flex-1" />
 
-        <button
-          onClick={() => setImportOpen(true)}
-          className="flex items-center gap-1.5 text-xs border border-zinc-700 text-zinc-400 hover:text-zinc-100 rounded-md px-2.5 py-1 transition shrink-0"
-          title="Import flows from OpenAPI / Swagger spec"
-        >
-          <FileJson size={12} />
-          Import
-        </button>
-
-        <button
-          onClick={() => { setCredsOpen((v) => !v); setTestOpen(false); setSettingsOpen(false); }}
-          className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1 transition shrink-0 ${
-            credsOpen
-              ? "bg-zinc-800 border-zinc-600 text-zinc-100"
-              : "border-zinc-700 text-zinc-400 hover:text-zinc-100"
-          }`}
-        >
-          <KeyRound size={12} />
-          Credentials
-        </button>
-
         {selectedFlow && (
           <>
             <button
-              onClick={() => { setSettingsOpen((v) => !v); setTestOpen(false); setCredsOpen(false); }}
+              onClick={() => { setSettingsOpen((v) => !v); setTestOpen(false); }}
               className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1 transition shrink-0 ${
                 settingsOpen
                   ? "bg-zinc-800 border-zinc-600 text-zinc-100"
@@ -231,7 +208,7 @@ export function FlowBuilder({ project, onBack }: Props) {
               Settings
             </button>
             <button
-              onClick={() => { setTestOpen((v) => !v); setCredsOpen(false); setSettingsOpen(false); }}
+              onClick={() => { setTestOpen((v) => !v); setSettingsOpen(false); }}
               className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1 transition shrink-0 ${
                 testOpen
                   ? "bg-zinc-800 border-zinc-600 text-zinc-100"
@@ -269,10 +246,6 @@ export function FlowBuilder({ project, onBack }: Props) {
           />
         )}
 
-        {credsOpen && (
-          <CredentialsPanel project={project} onClose={() => setCredsOpen(false)} />
-        )}
-
         {settingsOpen && selectedFlow && (
           <FlowSettingsPanel
             project={project}
@@ -289,14 +262,6 @@ export function FlowBuilder({ project, onBack }: Props) {
           />
         )}
       </div>
-
-      {importOpen && (
-        <OpenAPIImportModal
-          project={project}
-          onClose={() => setImportOpen(false)}
-          onImported={() => setImportOpen(false)}
-        />
-      )}
 
       <CreateFlowDialog
         projectId={project.id}

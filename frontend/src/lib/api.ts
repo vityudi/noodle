@@ -147,6 +147,25 @@ export const aiApi = {
       .then((r) => r.data.flow),
 };
 
+export interface EnvVariable {
+  id: string;
+  project_id: string;
+  key: string;
+  is_secret: boolean;
+  created_at: string;
+}
+
+export const envApi = {
+  list: (projectId: string) =>
+    api.get<EnvVariable[]>(`/api/projects/${projectId}/env`).then((r) => r.data),
+  create: (projectId: string, data: { key: string; value: string; is_secret: boolean }) =>
+    api.post<EnvVariable>(`/api/projects/${projectId}/env`, data).then((r) => r.data),
+  delete: (projectId: string, id: string) =>
+    api.delete(`/api/projects/${projectId}/env/${id}`),
+  reveal: (projectId: string, id: string) =>
+    api.get<{ value: string }>(`/api/projects/${projectId}/env/${id}/reveal`).then((r) => r.data),
+};
+
 export const credentialsApi = {
   list: (projectId: string) =>
     api.get<Credential[]>(`/api/projects/${projectId}/credentials`).then((r) => r.data),

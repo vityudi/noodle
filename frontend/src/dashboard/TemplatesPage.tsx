@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { templatesApi, projectsApi, flowsApi, type FlowTemplate, type Project } from "@/lib/api";
 import { Layers, ArrowRight, X, Check } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CATEGORY_COLORS: Record<string, string> = {
   rest:         "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -68,15 +69,18 @@ function UseTemplateDialog({ template, projects, onClose }: UseDialogProps) {
               {projects.length === 0 ? (
                 <p className="text-xs text-zinc-500">No projects yet. Create a project first.</p>
               ) : (
-                <select
-                  value={selectedProjectId}
-                  onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-500"
-                >
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100 text-sm h-9 focus:ring-zinc-600 focus:ring-offset-zinc-900">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                    {projects.map((p) => (
+                      <SelectItem key={p.id} value={p.id} className="text-zinc-100 focus:bg-zinc-700 focus:text-zinc-100">
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             </div>
 

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { aiApi, flowsApi, projectsApi, type Project } from "@/lib/api";
 import { Sparkles, X, Send, ChevronDown, Check } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Message {
   role: "user" | "assistant";
@@ -100,15 +101,18 @@ export function GlobalAIChat({ onOpenProject }: Props) {
               <span className="text-sm font-semibold text-zinc-100">AI Assistant</span>
             </div>
             <div className="flex items-center gap-2">
-              <select
-                value={selectedProject?.id ?? ""}
-                onChange={(e) => setProjectId(e.target.value)}
-                className="bg-zinc-800 border border-white/10 rounded-md px-2 py-0.5 text-xs text-zinc-300 focus:outline-none max-w-[130px] truncate"
-              >
-                {projects.length === 0
-                  ? <option>No projects</option>
-                  : projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              <Select value={selectedProject?.id ?? ""} onValueChange={setProjectId}>
+                <SelectTrigger className="bg-zinc-800 border-white/10 text-zinc-300 text-xs h-7 max-w-[130px] focus:ring-zinc-600 focus:ring-offset-zinc-900">
+                  <SelectValue placeholder="No projects" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id} className="text-xs text-zinc-100 focus:bg-zinc-700 focus:text-zinc-100">
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <button onClick={() => setOpen(false)} className="text-zinc-500 hover:text-zinc-300 transition">
                 <ChevronDown size={16} />
               </button>

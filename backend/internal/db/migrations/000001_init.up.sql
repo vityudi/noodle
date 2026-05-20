@@ -46,6 +46,16 @@ CREATE TABLE credentials (
     UNIQUE (project_id, name)
 );
 
+CREATE TABLE env_variables (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES mcp_projects(id) ON DELETE CASCADE,
+    key        TEXT NOT NULL,
+    value_enc  BYTEA NOT NULL,
+    is_secret  BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (project_id, key)
+);
+
 CREATE TABLE tool_executions (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     flow_id     UUID NOT NULL REFERENCES flows(id) ON DELETE CASCADE,

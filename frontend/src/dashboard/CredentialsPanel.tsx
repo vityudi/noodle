@@ -4,7 +4,9 @@ import { credentialsApi, type Credential } from "@/lib/api";
 import { Plus, Trash2, Eye, EyeOff, Key, Lock } from "lucide-react";
 
 const CREDENTIAL_TYPES = [
-  { value: "api_key", label: "API Key", fields: [{ key: "key", label: "API Key", secret: true }] },
+  { value: "api_key",      label: "API Key",      fields: [{ key: "key",    label: "API Key",        secret: true  }] },
+  { value: "bearer_token", label: "Bearer Token", fields: [{ key: "token",  label: "Token",          secret: true  }] },
+  { value: "db_url",       label: "Database URL", fields: [{ key: "url",    label: "Connection URL", secret: true  }] },
   {
     value: "basic_auth",
     label: "Basic Auth",
@@ -17,15 +19,10 @@ const CREDENTIAL_TYPES = [
     value: "oauth2",
     label: "OAuth 2.0",
     fields: [
-      { key: "client_id", label: "Client ID", secret: false },
-      { key: "client_secret", label: "Client Secret", secret: true },
-      { key: "token_url", label: "Token URL", secret: false },
+      { key: "client_id",     label: "Client ID",     secret: false },
+      { key: "client_secret", label: "Client Secret", secret: true  },
+      { key: "token_url",     label: "Token URL",     secret: false },
     ],
-  },
-  {
-    value: "bearer_token",
-    label: "Bearer Token",
-    fields: [{ key: "token", label: "Token", secret: true }],
   },
 ];
 

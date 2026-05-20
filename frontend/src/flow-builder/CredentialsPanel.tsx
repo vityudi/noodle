@@ -2,15 +2,17 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { credentialsApi, type Credential, type Project } from "@/lib/api";
 import { X, Plus, Trash2, Eye, EyeOff, Key, Lock } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CREDENTIAL_TYPES = [
-  { value: "api_key",      label: "API Key",      fields: [{ key: "key",           label: "Key",           secret: true  }] },
-  { value: "bearer_token", label: "Bearer Token", fields: [{ key: "token",         label: "Token",         secret: true  }] },
-  { value: "basic_auth",   label: "Basic Auth",   fields: [{ key: "username",      label: "Username",      secret: false },
-                                                            { key: "password",      label: "Password",      secret: true  }] },
-  { value: "oauth2",       label: "OAuth 2.0",    fields: [{ key: "client_id",     label: "Client ID",     secret: false },
-                                                            { key: "client_secret", label: "Client Secret", secret: true  },
-                                                            { key: "token_url",     label: "Token URL",     secret: false }] },
+  { value: "api_key",      label: "API Key",           fields: [{ key: "key",           label: "Key",           secret: true  }] },
+  { value: "bearer_token", label: "Bearer Token",      fields: [{ key: "token",         label: "Token",         secret: true  }] },
+  { value: "basic_auth",   label: "Basic Auth",        fields: [{ key: "username",      label: "Username",      secret: false },
+                                                                 { key: "password",      label: "Password",      secret: true  }] },
+  { value: "oauth2",       label: "OAuth 2.0",         fields: [{ key: "client_id",     label: "Client ID",     secret: false },
+                                                                 { key: "client_secret", label: "Client Secret", secret: true  },
+                                                                 { key: "token_url",     label: "Token URL",     secret: false }] },
+  { value: "db_url",       label: "Database URL",      fields: [{ key: "url",           label: "Connection URL", secret: true }] },
 ];
 
 interface Props {
@@ -88,15 +90,18 @@ function AddForm({ projectId, onDone }: { projectId: string; onDone: () => void 
       </div>
       <div>
         <label className="block text-xs text-zinc-400 mb-1">Type</label>
-        <select
-          value={type}
-          onChange={(e) => { setType(e.target.value); setFields({}); }}
-          className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-xs text-zinc-100 focus:outline-none"
-        >
-          {CREDENTIAL_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
-          ))}
-        </select>
+        <Select value={type} onValueChange={(v) => { setType(v); setFields({}); }}>
+          <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100 text-xs h-8 focus:ring-zinc-600 focus:ring-offset-zinc-900">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-zinc-800 border-zinc-700 text-zinc-100">
+            {CREDENTIAL_TYPES.map((t) => (
+              <SelectItem key={t.value} value={t.value} className="text-xs text-zinc-100 focus:bg-zinc-700 focus:text-zinc-100">
+                {t.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       {typeDef.fields.map((f) => (
         <div key={f.key}>

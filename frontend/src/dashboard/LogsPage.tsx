@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { logsApi, projectsApi, type ExecutionLog, type Project } from "@/lib/api";
 import { CheckCircle2, XCircle, Clock, ChevronDown, ChevronRight } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function duration(ms: number | null) {
   if (ms === null) return "—";
@@ -93,15 +94,18 @@ export function LogsPage() {
     <div>
       {projects.length > 1 && (
         <div className="flex justify-end mb-6">
-          <select
-            value={selectedProject?.id ?? ""}
-            onChange={(e) => setProjectId(e.target.value)}
-            className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none"
-          >
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+          <Select value={selectedProject?.id ?? ""} onValueChange={setProjectId}>
+            <SelectTrigger className="w-48 bg-zinc-800 border-zinc-700 text-zinc-100 text-sm h-9 focus:ring-zinc-600 focus:ring-offset-zinc-950">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-800 border-zinc-700 text-zinc-100">
+              {projects.map((p) => (
+                <SelectItem key={p.id} value={p.id} className="text-zinc-100 focus:bg-zinc-700 focus:text-zinc-100">
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 
