@@ -53,6 +53,8 @@ func (n *MySQLNode) Execute(ctx context.Context, config map[string]interface{}) 
 		affected, _ := result.RowsAffected()
 		lastID, _ := result.LastInsertId()
 		return map[string]interface{}{
+			"rows":           []map[string]interface{}{},
+			"row_count":      int64(0),
 			"rows_affected":  affected,
 			"last_insert_id": lastID,
 		}, nil
@@ -99,7 +101,9 @@ func (n *MySQLNode) Execute(ctx context.Context, config map[string]interface{}) 
 	}
 
 	return map[string]interface{}{
-		"rows":      result,
-		"row_count": len(result),
+		"rows":           result,
+		"row_count":      len(result),
+		"rows_affected":  int64(0),
+		"last_insert_id": int64(0),
 	}, nil
 }

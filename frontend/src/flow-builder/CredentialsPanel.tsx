@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { credentialsApi, type Credential, type Project } from "@/lib/api";
-import { X, Plus, Trash2, Eye, EyeOff, Key, Lock } from "lucide-react";
+import { X, Plus, Trash2, Eye, EyeOff, Key, Lock, Database, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CREDENTIAL_TYPES = [
@@ -18,6 +18,62 @@ const CREDENTIAL_TYPES = [
 interface Props {
   project: Project;
   onClose: () => void;
+}
+
+function SchemaBlock({ schema }: { schema: string }) {
+  const lines = schema.trim().split("\n");
+  return (
+    <div className="mt-2 bg-zinc-800/60 border border-zinc-700/50 rounded-lg p-2.5 space-y-0.5">
+      <p className="text-[10px] text-zinc-500 font-medium uppercase tracking-wide mb-1.5">Schema</p>
+      {lines.map((line, i) => {
+        const [table, rest] = line.split("(");
+        return (
+          <div key={i} className="text-[11px] font-mono">
+            <span className="text-indigo-400">{table}</span>
+            {rest && <span className="text-zinc-500">(</span>}
+            {rest && <span className="text-zinc-400">{rest.replace(")", "")}</span>}
+            {rest && <span className="text-zinc-500">)</span>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function IntrospectButton({ projectId, credId, onDone, label = "Detect schema" }: { projectId: string; credId: string; onDone: () => void; label?: string }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handle() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await credentialsApi.introspect(projectId, credId);
+      if (res.ok) {
+        onDone();
+      } else {
+        setError(res.error ?? "Failed");
+      }
+    } catch {
+      setError("Connection failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="mt-1.5">
+      <button
+        onClick={handle}
+        disabled={loading}
+        className="flex items-center gap-1 text-xs text-zinc-600 hover:text-indigo-400 transition disabled:opacity-50"
+      >
+        <RefreshCw size={11} className={loading ? "animate-spin" : ""} />
+        {loading ? "Detecting…" : label}
+      </button>
+      {error && <p className="text-[11px] text-red-400 mt-0.5">{error}</p>}
+    </div>
+  );
 }
 
 function RevealButton({ projectId, cred }: { projectId: string; cred: Credential }) {
@@ -170,9 +226,11 @@ export function CredentialsPanel({ project, onClose }: Props) {
             <div key={c.id} className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
-                  {c.type === "api_key" || c.type === "bearer_token"
-                    ? <Key size={12} className="text-zinc-500 shrink-0" />
-                    : <Lock size={12} className="text-zinc-500 shrink-0" />}
+                  {c.connection_type
+                    ? <Database size={12} className="text-indigo-400 shrink-0" />
+                    : c.type === "api_key" || c.type === "bearer_token"
+                      ? <Key size={12} className="text-zinc-500 shrink-0" />
+                      : <Lock size={12} className="text-zinc-500 shrink-0" />}
                   <span className="text-xs font-medium text-zinc-200 truncate">{c.name}</span>
                 </div>
                 <button
@@ -182,7 +240,26 @@ export function CredentialsPanel({ project, onClose }: Props) {
                   <Trash2 size={12} />
                 </button>
               </div>
-              <RevealButton projectId={project.id} cred={c} />
+
+              {c.schema_cache ? (
+                <>
+                  <SchemaBlock schema={c.schema_cache} />
+                  <IntrospectButton
+                    label="Refresh schema"
+                    projectId={project.id}
+                    credId={c.id}
+                    onDone={() => qc.invalidateQueries({ queryKey: ["credentials", project.id] })}
+                  />
+                </>
+              ) : c.connection_type ? (
+                <IntrospectButton
+                  projectId={project.id}
+                  credId={c.id}
+                  onDone={() => qc.invalidateQueries({ queryKey: ["credentials", project.id] })}
+                />
+              ) : (
+                <RevealButton projectId={project.id} cred={c} />
+              )}
             </div>
           ))
         )}

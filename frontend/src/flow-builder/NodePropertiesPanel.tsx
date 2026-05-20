@@ -179,17 +179,20 @@ function CredentialPicker({ projectId, value, onChange, filter, label = "Credent
     );
   }
 
+  const MANUAL = "__manual__";
+  const selectValue = selectedRef ? credentialRef(selectedRef) : (value ? value : MANUAL);
+
   return (
     <Field label={label} hint="Saved credentials are injected at runtime — never exposed to the AI.">
       <Select
-        value={selectedRef ? credentialRef(selectedRef) : value}
-        onValueChange={onChange}
+        value={selectValue}
+        onValueChange={(v) => onChange(v === MANUAL ? "" : v)}
       >
         <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-100 text-sm h-9 focus:ring-zinc-600 focus:ring-offset-zinc-950">
           <SelectValue placeholder="— Type manually —" />
         </SelectTrigger>
         <SelectContent className="bg-zinc-900 border-zinc-700 text-zinc-100">
-          <SelectItem value="" className="text-zinc-500 focus:bg-zinc-800 focus:text-zinc-100">
+          <SelectItem value={MANUAL} className="text-zinc-500 focus:bg-zinc-800 focus:text-zinc-100">
             — Type manually —
           </SelectItem>
           {filtered.map((c) => (

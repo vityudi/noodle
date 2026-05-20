@@ -37,12 +37,14 @@ CREATE TABLE flows (
 );
 
 CREATE TABLE credentials (
-    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES mcp_projects(id) ON DELETE CASCADE,
-    name       TEXT NOT NULL,
-    type       TEXT NOT NULL,
-    data_enc   BYTEA NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID NOT NULL REFERENCES mcp_projects(id) ON DELETE CASCADE,
+    name            TEXT NOT NULL,
+    type            TEXT NOT NULL,
+    data_enc        BYTEA NOT NULL,
+    schema_cache    TEXT,
+    connection_type TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (project_id, name)
 );
 

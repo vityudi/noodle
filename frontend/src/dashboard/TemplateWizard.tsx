@@ -404,6 +404,7 @@ export function TemplateWizard({ template, projects, onClose }: Props) {
           name: input.key,
           type: "api_key",
           data: { [field]: val },
+          connection_type: input.connection_type,
         });
       }
 

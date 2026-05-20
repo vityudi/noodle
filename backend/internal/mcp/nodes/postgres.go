@@ -59,6 +59,8 @@ func (n *PostgreSQLNode) Execute(ctx context.Context, config map[string]interfac
 			return nil, fmt.Errorf("postgres: exec: %w", err)
 		}
 		return map[string]interface{}{
+			"rows":          []map[string]interface{}{},
+			"row_count":     int64(0),
 			"rows_affected": tag.RowsAffected(),
 		}, nil
 	}
@@ -92,8 +94,9 @@ func (n *PostgreSQLNode) Execute(ctx context.Context, config map[string]interfac
 	}
 
 	return map[string]interface{}{
-		"rows":      result,
-		"row_count": len(result),
+		"rows":          result,
+		"row_count":     len(result),
+		"rows_affected": int64(0),
 	}, nil
 }
 

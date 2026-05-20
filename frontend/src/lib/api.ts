@@ -73,9 +73,11 @@ export interface Flow {
 
 export interface Credential {
   id: string;
-  workspace_id: string;
+  project_id: string;
   name: string;
   type: string;
+  connection_type?: string;
+  schema_cache?: string;
   created_at: string;
 }
 
@@ -182,12 +184,18 @@ export const envApi = {
 export const credentialsApi = {
   list: (projectId: string) =>
     api.get<Credential[]>(`/api/projects/${projectId}/credentials`).then((r) => r.data),
-  create: (projectId: string, data: { name: string; type: string; data: Record<string, string> }) =>
+  create: (projectId: string, data: { name: string; type: string; data: Record<string, string>; connection_type?: string }) =>
     api.post<Credential>(`/api/projects/${projectId}/credentials`, data).then((r) => r.data),
   delete: (projectId: string, id: string) =>
     api.delete(`/api/projects/${projectId}/credentials/${id}`),
   reveal: (projectId: string, id: string) =>
     api.get<{ data: Record<string, string> }>(`/api/projects/${projectId}/credentials/${id}/reveal`).then((r) => r.data),
+  introspect: (projectId: string, id: string) =>
+    api
+      .post<{ ok: boolean; schema?: string; error?: string }>(
+        `/api/projects/${projectId}/credentials/${id}/introspect`
+      )
+      .then((r) => r.data),
   testConnection: (projectId: string, type: string, connectionString: string) =>
     api
       .post<{ ok: boolean; latency_ms?: number; error?: string }>(

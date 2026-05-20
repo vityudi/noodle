@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -12,6 +13,8 @@ import (
 	"github.com/vityudi/noodle/backend/internal/mcp"
 	"github.com/vityudi/noodle/backend/internal/mcp/runtime"
 )
+
+var credRefRe = regexp.MustCompile(`\{\{credentials\.([^.}]+)\.`)
 
 type Handler struct{ db *pgxpool.Pool }
 
@@ -113,6 +116,9 @@ func (h *Handler) listTools(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Load schema caches for all credentials in this project once.
+	schemaCaches, _ := h.loadSchemaCaches(r.Context(), proj.id)
+
 	tools := make([]ToolDef, 0)
 	for _, f := range flowRows {
 		if f.flowType != "tool" {
@@ -122,9 +128,13 @@ func (h *Handler) listTools(w http.ResponseWriter, r *http.Request) {
 		if err := json.Unmarshal(f.flowJSON, &def); err != nil {
 			continue
 		}
+		desc := def.Description
+		if schema := h.buildSchemaContext(&def, schemaCaches); schema != "" {
+			desc += "\n\nDatabase schema:\n" + schema
+		}
 		tools = append(tools, ToolDef{
 			Name:        f.name,
-			Description: def.Description,
+			Description: desc,
 			InputSchema: buildInputSchema(def.InputSchema),
 		})
 	}
@@ -333,6 +343,77 @@ func (h *Handler) readResource(w http.ResponseWriter, r *http.Request) {
 			{"uri": req.URI, "mimeType": "application/json", "text": toText(result)},
 		},
 	})
+}
+
+// loadSchemaCaches returns a map of credential name → schema_cache for a project.
+func (h *Handler) loadSchemaCaches(ctx context.Context, projectID string) (map[string]string, error) {
+	rows, err := h.db.Query(ctx,
+		`SELECT name, schema_cache FROM credentials WHERE project_id = $1 AND schema_cache IS NOT NULL AND schema_cache != ''`,
+		projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make(map[string]string)
+	for rows.Next() {
+		var name, schema string
+		if err := rows.Scan(&name, &schema); err == nil {
+			out[name] = schema
+		}
+	}
+	return out, rows.Err()
+}
+
+// buildSchemaContext finds all {{credentials.NAME.*}} references in the flow and
+// returns the combined schema string for those credentials (if cached).
+func (h *Handler) buildSchemaContext(def *mcp.FlowDef, schemaCaches map[string]string) string {
+	if len(schemaCaches) == 0 {
+		return ""
+	}
+
+	seen := make(map[string]bool)
+	var parts []string
+
+	var walkValue func(v interface{})
+	walkValue = func(v interface{}) {
+		switch val := v.(type) {
+		case string:
+			for _, m := range credRefRe.FindAllStringSubmatch(val, -1) {
+				name := m[1]
+				if !seen[name] {
+					seen[name] = true
+					if schema, ok := schemaCaches[name]; ok {
+						parts = append(parts, schema)
+					}
+				}
+			}
+		case map[string]interface{}:
+			for _, v := range val {
+				walkValue(v)
+			}
+		case []interface{}:
+			for _, v := range val {
+				walkValue(v)
+			}
+		}
+	}
+
+	for _, node := range def.Nodes {
+		walkValue(node.Config)
+	}
+
+	if len(parts) == 0 {
+		return ""
+	}
+	result := ""
+	for i, p := range parts {
+		if i > 0 {
+			result += "\n"
+		}
+		result += p
+	}
+	return result
 }
 
 func buildInputSchema(schema map[string]mcp.InputFieldDef) map[string]interface{} {

@@ -67,6 +67,7 @@ func NewRouter(db *pgxpool.Pool, devMode bool) http.Handler {
 			r.Post("/", creds.create)
 			r.Delete("/{credID}", creds.delete)
 			r.Get("/{credID}/reveal", creds.reveal)
+			r.Post("/{credID}/introspect", creds.introspect)
 		})
 
 		tc := &testConnHandler{db: db}

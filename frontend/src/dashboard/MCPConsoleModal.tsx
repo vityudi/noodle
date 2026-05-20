@@ -1,7 +1,49 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { mcpApi, type MCPTool, type MCPResource, type Project } from "@/lib/api";
-import { X, Play, ChevronRight, Wrench, Database } from "lucide-react";
+import { X, Play, ChevronRight, Wrench, Database, ChevronDown } from "lucide-react";
+
+const SCHEMA_MARKER = "\n\nDatabase schema:\n";
+
+function splitDescription(desc: string): { base: string; schema: string | null } {
+  const idx = desc.indexOf(SCHEMA_MARKER);
+  if (idx === -1) return { base: desc, schema: null };
+  return { base: desc.slice(0, idx), schema: desc.slice(idx + SCHEMA_MARKER.length) };
+}
+
+function SchemaCollapsible({ schema }: { schema: string }) {
+  const [open, setOpen] = useState(false);
+  const lines = schema.trim().split("\n");
+  return (
+    <div className="mt-1.5 border border-zinc-700/60 rounded-lg overflow-hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-3 py-1.5 bg-zinc-800/60 hover:bg-zinc-800 transition text-left"
+      >
+        <span className="text-[11px] font-medium text-indigo-400 flex items-center gap-1.5">
+          <Database size={11} />
+          Database schema · {lines.length} table{lines.length !== 1 ? "s" : ""}
+        </span>
+        <ChevronDown size={11} className={`text-zinc-500 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="px-3 py-2 space-y-0.5 bg-zinc-900">
+          {lines.map((line, i) => {
+            const paren = line.indexOf("(");
+            const table = paren !== -1 ? line.slice(0, paren) : line;
+            const cols = paren !== -1 ? line.slice(paren) : "";
+            return (
+              <div key={i} className="text-[11px] font-mono">
+                <span className="text-indigo-400">{table}</span>
+                <span className="text-zinc-500">{cols}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface Props {
   project: Project;
@@ -178,11 +220,17 @@ export function MCPConsoleModal({ project, onClose }: Props) {
                   <p className="text-xs font-medium text-zinc-100">
                     {selectedTool?.name ?? selectedResource?.name}
                   </p>
-                  {(selectedTool?.description || selectedResource?.description) && (
-                    <p className="text-xs text-zinc-500 mt-0.5">
-                      {selectedTool?.description ?? selectedResource?.description}
-                    </p>
-                  )}
+                  {(() => {
+                    const raw = selectedTool?.description ?? selectedResource?.description ?? "";
+                    if (!raw) return null;
+                    const { base, schema } = splitDescription(raw);
+                    return (
+                      <>
+                        {base && <p className="text-xs text-zinc-500 mt-0.5">{base}</p>}
+                        {schema && <SchemaCollapsible schema={schema} />}
+                      </>
+                    );
+                  })()}
                   {selectedResource && (
                     <p className="text-xs text-zinc-600 font-mono mt-1">{selectedResource.uri}</p>
                   )}
