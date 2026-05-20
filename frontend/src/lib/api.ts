@@ -77,6 +77,33 @@ export interface Credential {
   created_at: string;
 }
 
+export interface ExecutionLog {
+  id: string;
+  flow_id: string;
+  flow_name: string;
+  input: unknown;
+  output: unknown;
+  error: string | null;
+  duration_ms: number | null;
+  executed_at: string;
+}
+
+export const logsApi = {
+  list: (projectId: string) =>
+    api.get<ExecutionLog[]>(`/api/projects/${projectId}/logs`).then((r) => r.data),
+};
+
+export interface AISettings {
+  provider: string;
+  model: string;
+}
+
+export const settingsApi = {
+  getAI: () => api.get<AISettings>("/api/settings/ai").then((r) => r.data),
+  updateAI: (data: { provider?: string; model?: string; api_key?: string }) =>
+    api.put("/api/settings/ai", data).then((r) => r.data),
+};
+
 export const mcpApi = {
   listTools: (slug: string) =>
     api.get(`/mcp/${slug}`).then((r) => r.data),

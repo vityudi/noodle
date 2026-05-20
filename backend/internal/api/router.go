@@ -67,6 +67,15 @@ func NewRouter(db *pgxpool.Pool, devMode bool) http.Handler {
 			r.Delete("/{credID}", creds.delete)
 			r.Get("/{credID}/reveal", creds.reveal)
 		})
+
+		logs := &logsHandler{db: db}
+		r.Get("/api/projects/{projectID}/logs", logs.list)
+
+		sett := settingsHandlerFor(db)
+		r.Route("/api/settings", func(r chi.Router) {
+			r.Get("/ai", sett.getAI)
+			r.Put("/ai", sett.updateAI)
+		})
 	})
 
 	// Public schema endpoint — no auth required.

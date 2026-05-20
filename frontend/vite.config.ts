@@ -10,11 +10,15 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    host: true,
+    watch: {
+      usePolling: true,
+      interval: 300,
+    },
     proxy: {
-      "/api": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-      },
+      "/api": { target: "http://backend:8080", changeOrigin: true },
+      "/mcp": { target: "http://backend:8080", changeOrigin: true },
+      "/schema": { target: "http://backend:8080", changeOrigin: true },
     },
   },
 });
