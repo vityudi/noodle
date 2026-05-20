@@ -273,16 +273,27 @@ export function FlowCanvas({ flow, projectId, saveRef, loadRef }: Props) {
           onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
           fitView
-          fitViewOptions={{ padding: 0.2 }}
+          fitViewOptions={{ padding: 0.25 }}
           deleteKeyCode="Delete"
-          className="bg-zinc-950"
+          style={{ background: "#0e0e10" }}
+          defaultEdgeOptions={{
+            style: { stroke: "#3f3f46", strokeWidth: 2 },
+            animated: false,
+          }}
         >
-          <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#3f3f46" />
-          <Controls className="[&>button]:bg-zinc-800 [&>button]:border-zinc-700 [&>button]:text-zinc-300 [&>button:hover]:bg-zinc-700" />
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={24}
+            size={1}
+            color="#2a2a2e"
+          />
+          <Controls
+            className="[&>button]:!bg-[#1c1c1f] [&>button]:!border-white/10 [&>button]:!text-zinc-400 [&>button:hover]:!bg-[#27272a] [&>button]:!rounded-lg [&>button]:!shadow-none"
+          />
           <MiniMap
-            className="!bg-zinc-900 !border !border-zinc-800"
-            nodeColor="#52525b"
-            maskColor="rgba(9,9,11,0.7)"
+            className="!bg-[#1c1c1f] !border !border-white/10 !rounded-xl !overflow-hidden"
+            nodeColor="#3f3f46"
+            maskColor="rgba(14,14,16,0.8)"
           />
         </ReactFlow>
       </div>

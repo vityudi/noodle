@@ -65,13 +65,6 @@ export function SchemaPage() {
 
   return (
     <div className="max-w-3xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-zinc-100">Flow Schema Spec</h1>
-        <p className="text-zinc-400 text-sm mt-1">
-          The public JSON Schema that defines the Noodle flow format. Use it for validation, editor tooling, or to build your own integrations.
-        </p>
-      </div>
-
       {/* Schema URL */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-6">
         <div className="flex items-center gap-2 mb-3">

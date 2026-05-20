@@ -40,11 +40,6 @@ export function SettingsPage() {
 
   return (
     <div className="max-w-xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-zinc-400 text-sm mt-1">Configure the AI assistant and other instance settings.</p>
-      </div>
-
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
         <h2 className="text-sm font-semibold text-zinc-200 mb-5">AI Assistant</h2>
 

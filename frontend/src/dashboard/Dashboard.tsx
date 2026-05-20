@@ -6,16 +6,22 @@ import { CreateProjectDialog } from "./CreateProjectDialog";
 import { SchemaPage } from "./SchemaPage";
 import { LogsPage } from "./LogsPage";
 import { SettingsPage } from "./SettingsPage";
-import { Sidebar, type SidebarPage } from "./Sidebar";
+import { type SidebarPage } from "./Sidebar";
 import { Plus } from "lucide-react";
 
 interface Props {
-  onLogout: () => void;
+  page: SidebarPage;
   onOpenProject: (project: Project) => void;
 }
 
-export function Dashboard({ onLogout, onOpenProject }: Props) {
-  const [page, setPage] = useState<SidebarPage>("projects");
+const PAGE_META: Record<SidebarPage, { title: string; subtitle: string }> = {
+  projects: { title: "Projects",       subtitle: "Each project exposes a set of tools via an MCP endpoint." },
+  logs:     { title: "Execution Logs", subtitle: "Last 100 tool executions per project." },
+  schema:   { title: "Flow Schema",    subtitle: "Public JSON Schema spec for the Noodle flow format." },
+  settings: { title: "Settings",       subtitle: "Configure the AI assistant and other instance settings." },
+};
+
+export function Dashboard({ page, onOpenProject }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -29,36 +35,30 @@ export function Dashboard({ onLogout, onOpenProject }: Props) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects"] }),
   });
 
-  function handleLogout() {
-    localStorage.removeItem("token");
-    onLogout();
-  }
+  const meta = PAGE_META[page];
 
   return (
-    <div className="flex h-screen bg-zinc-950 text-zinc-100 overflow-hidden">
-      <Sidebar active={page} onNavigate={setPage} onLogout={handleLogout} />
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Sticky page header */}
+      <header className="shrink-0 border-b border-zinc-800 bg-zinc-950 px-8 h-12 flex items-center justify-between">
+        <h1 className="text-sm font-semibold text-zinc-100">{meta.title}</h1>
+
+        {page === "projects" && (
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="flex items-center gap-2 bg-white text-zinc-900 font-medium rounded-lg px-4 py-2 text-sm hover:bg-zinc-200 transition"
+          >
+            <Plus size={15} />
+            New project
+          </button>
+        )}
+      </header>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-8 py-8">
+        <div className="px-8 py-8 max-w-5xl">
 
           {page === "projects" && (
             <>
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h1 className="text-2xl font-bold">Projects</h1>
-                  <p className="text-zinc-400 text-sm mt-1">
-                    Each project exposes a set of tools via an MCP endpoint.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setCreateOpen(true)}
-                  className="flex items-center gap-2 bg-white text-zinc-900 font-medium rounded-lg px-4 py-2 text-sm hover:bg-zinc-200 transition"
-                >
-                  <Plus size={16} />
-                  New project
-                </button>
-              </div>
-
               {isLoading ? (
                 <div className="text-zinc-500 text-sm">Loading…</div>
               ) : projects.length === 0 ? (
@@ -96,8 +96,8 @@ export function Dashboard({ onLogout, onOpenProject }: Props) {
             </>
           )}
 
-          {page === "logs" && <LogsPage />}
-          {page === "schema" && <SchemaPage />}
+          {page === "logs"     && <LogsPage />}
+          {page === "schema"   && <SchemaPage />}
           {page === "settings" && <SettingsPage />}
         </div>
       </main>

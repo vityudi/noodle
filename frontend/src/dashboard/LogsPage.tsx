@@ -91,12 +91,8 @@ export function LogsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold">Execution Logs</h1>
-          <p className="text-zinc-400 text-sm mt-1">Last 100 tool executions per project.</p>
-        </div>
-        {projects.length > 1 && (
+      {projects.length > 1 && (
+        <div className="flex justify-end mb-6">
           <select
             value={selectedProject?.id ?? ""}
             onChange={(e) => setProjectId(e.target.value)}
@@ -106,8 +102,8 @@ export function LogsPage() {
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-        )}
-      </div>
+        </div>
+      )}
 
       {!selectedProject ? (
         <div className="border border-dashed border-zinc-800 rounded-xl p-16 text-center">
