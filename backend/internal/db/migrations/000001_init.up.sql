@@ -35,13 +35,13 @@ CREATE TABLE flows (
 );
 
 CREATE TABLE credentials (
-    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
-    name         TEXT NOT NULL,
-    type         TEXT NOT NULL,
-    data_enc     BYTEA NOT NULL,
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (workspace_id, name)
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES mcp_projects(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL,
+    type       TEXT NOT NULL,
+    data_enc   BYTEA NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (project_id, name)
 );
 
 CREATE TABLE tool_executions (

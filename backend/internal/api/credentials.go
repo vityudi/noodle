@@ -16,32 +16,33 @@ import (
 type credentialsHandler struct{ db *pgxpool.Pool }
 
 type Credential struct {
-	ID          string    `json:"id"`
-	WorkspaceID string    `json:"workspace_id"`
-	Name        string    `json:"name"`
-	Type        string    `json:"type"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID        string    `json:"id"`
+	ProjectID string    `json:"project_id"`
+	Name      string    `json:"name"`
+	Type      string    `json:"type"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
-func (h *credentialsHandler) workspaceID(r *http.Request) (string, error) {
+func (h *credentialsHandler) ownsProject(r *http.Request, projectID string) bool {
 	userID := userIDFromCtx(r.Context())
-	var wsID string
-	err := h.db.QueryRow(r.Context(),
-		`SELECT id FROM workspaces WHERE owner_id = $1 LIMIT 1`, userID,
-	).Scan(&wsID)
-	return wsID, err
+	var count int
+	_ = h.db.QueryRow(r.Context(), `
+		SELECT COUNT(*) FROM mcp_projects p
+		JOIN workspaces w ON w.id = p.workspace_id
+		WHERE p.id = $1 AND w.owner_id = $2`, projectID, userID).Scan(&count)
+	return count > 0
 }
 
 func (h *credentialsHandler) list(w http.ResponseWriter, r *http.Request) {
-	wsID, err := h.workspaceID(r)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "workspace not found")
+	projectID := chi.URLParam(r, "projectID")
+	if !h.ownsProject(r, projectID) {
+		writeError(w, http.StatusNotFound, "project not found")
 		return
 	}
 
 	rows, err := h.db.Query(r.Context(),
-		`SELECT id, workspace_id, name, type, created_at FROM credentials WHERE workspace_id = $1 ORDER BY created_at DESC`,
-		wsID)
+		`SELECT id, project_id, name, type, created_at FROM credentials WHERE project_id = $1 ORDER BY created_at DESC`,
+		projectID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "db error")
 		return
@@ -51,7 +52,7 @@ func (h *credentialsHandler) list(w http.ResponseWriter, r *http.Request) {
 	creds := []Credential{}
 	for rows.Next() {
 		var c Credential
-		if err := rows.Scan(&c.ID, &c.WorkspaceID, &c.Name, &c.Type, &c.CreatedAt); err == nil {
+		if err := rows.Scan(&c.ID, &c.ProjectID, &c.Name, &c.Type, &c.CreatedAt); err == nil {
 			creds = append(creds, c)
 		}
 	}
@@ -65,9 +66,9 @@ type createCredentialRequest struct {
 }
 
 func (h *credentialsHandler) create(w http.ResponseWriter, r *http.Request) {
-	wsID, err := h.workspaceID(r)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "workspace not found")
+	projectID := chi.URLParam(r, "projectID")
+	if !h.ownsProject(r, projectID) {
+		writeError(w, http.StatusNotFound, "project not found")
 		return
 	}
 
@@ -98,11 +99,11 @@ func (h *credentialsHandler) create(w http.ResponseWriter, r *http.Request) {
 
 	var c Credential
 	err = h.db.QueryRow(r.Context(),
-		`INSERT INTO credentials (workspace_id, name, type, data_enc)
+		`INSERT INTO credentials (project_id, name, type, data_enc)
 		 VALUES ($1, $2, $3, $4)
-		 RETURNING id, workspace_id, name, type, created_at`,
-		wsID, req.Name, req.Type, []byte(encData),
-	).Scan(&c.ID, &c.WorkspaceID, &c.Name, &c.Type, &c.CreatedAt)
+		 RETURNING id, project_id, name, type, created_at`,
+		projectID, req.Name, req.Type, []byte(encData),
+	).Scan(&c.ID, &c.ProjectID, &c.Name, &c.Type, &c.CreatedAt)
 	if err != nil {
 		writeError(w, http.StatusConflict, "credential name already exists")
 		return
@@ -111,16 +112,16 @@ func (h *credentialsHandler) create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *credentialsHandler) delete(w http.ResponseWriter, r *http.Request) {
-	wsID, err := h.workspaceID(r)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "workspace not found")
+	projectID := chi.URLParam(r, "projectID")
+	if !h.ownsProject(r, projectID) {
+		writeError(w, http.StatusNotFound, "project not found")
 		return
 	}
 
 	credID := chi.URLParam(r, "credID")
-	_, err = h.db.Exec(r.Context(),
-		`DELETE FROM credentials WHERE id = $1 AND workspace_id = $2`,
-		credID, wsID)
+	_, err := h.db.Exec(r.Context(),
+		`DELETE FROM credentials WHERE id = $1 AND project_id = $2`,
+		credID, projectID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "delete failed")
 		return
@@ -128,19 +129,18 @@ func (h *credentialsHandler) delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// reveal returns the decrypted data for a credential.
 func (h *credentialsHandler) reveal(w http.ResponseWriter, r *http.Request) {
-	wsID, err := h.workspaceID(r)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "workspace not found")
+	projectID := chi.URLParam(r, "projectID")
+	if !h.ownsProject(r, projectID) {
+		writeError(w, http.StatusNotFound, "project not found")
 		return
 	}
 
 	credID := chi.URLParam(r, "credID")
 	var encData []byte
-	err = h.db.QueryRow(r.Context(),
-		`SELECT data_enc FROM credentials WHERE id = $1 AND workspace_id = $2`,
-		credID, wsID,
+	err := h.db.QueryRow(r.Context(),
+		`SELECT data_enc FROM credentials WHERE id = $1 AND project_id = $2`,
+		credID, projectID,
 	).Scan(&encData)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "credential not found")

@@ -1,6 +1,6 @@
-import { FolderOpen, KeyRound, FileCode2, ScrollText, Settings, LogOut } from "lucide-react";
+import { FolderOpen, FileCode2, ScrollText, Settings, LogOut } from "lucide-react";
 
-export type SidebarPage = "projects" | "credentials" | "logs" | "schema" | "settings";
+export type SidebarPage = "projects" | "logs" | "schema" | "settings";
 
 interface Props {
   active: SidebarPage;
@@ -9,10 +9,9 @@ interface Props {
 }
 
 const NAV: Array<{ id: SidebarPage; label: string; icon: React.ElementType }> = [
-  { id: "projects",    label: "Projects",    icon: FolderOpen },
-  { id: "credentials", label: "Credentials", icon: KeyRound },
-  { id: "logs",        label: "Logs",        icon: ScrollText },
-  { id: "schema",      label: "Schema",      icon: FileCode2 },
+  { id: "projects", label: "Projects", icon: FolderOpen },
+  { id: "logs",     label: "Logs",     icon: ScrollText },
+  { id: "schema",   label: "Schema",   icon: FileCode2 },
 ];
 
 export function Sidebar({ active, onNavigate, onLogout }: Props) {

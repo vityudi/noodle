@@ -124,12 +124,14 @@ export const mcpApi = {
 };
 
 export const credentialsApi = {
-  list: () => api.get<Credential[]>("/api/credentials").then((r) => r.data),
-  create: (data: { name: string; type: string; data: Record<string, string> }) =>
-    api.post<Credential>("/api/credentials", data).then((r) => r.data),
-  delete: (id: string) => api.delete(`/api/credentials/${id}`),
-  reveal: (id: string) =>
-    api.get<{ data: Record<string, string> }>(`/api/credentials/${id}/reveal`).then((r) => r.data),
+  list: (projectId: string) =>
+    api.get<Credential[]>(`/api/projects/${projectId}/credentials`).then((r) => r.data),
+  create: (projectId: string, data: { name: string; type: string; data: Record<string, string> }) =>
+    api.post<Credential>(`/api/projects/${projectId}/credentials`, data).then((r) => r.data),
+  delete: (projectId: string, id: string) =>
+    api.delete(`/api/projects/${projectId}/credentials/${id}`),
+  reveal: (projectId: string, id: string) =>
+    api.get<{ data: Record<string, string> }>(`/api/projects/${projectId}/credentials/${id}/reveal`).then((r) => r.data),
 };
 
 export const flowsApi = {

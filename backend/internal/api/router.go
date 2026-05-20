@@ -62,7 +62,7 @@ func NewRouter(db *pgxpool.Pool, devMode bool) http.Handler {
 		})
 
 		creds := &credentialsHandler{db: db}
-		r.Route("/api/credentials", func(r chi.Router) {
+		r.Route("/api/projects/{projectID}/credentials", func(r chi.Router) {
 			r.Get("/", creds.list)
 			r.Post("/", creds.create)
 			r.Delete("/{credID}", creds.delete)

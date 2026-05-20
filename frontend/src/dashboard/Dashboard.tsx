@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, type Project } from "@/lib/api";
 import { ProjectCard } from "./ProjectCard";
 import { CreateProjectDialog } from "./CreateProjectDialog";
-import { CredentialsPanel } from "./CredentialsPanel";
 import { SchemaPage } from "./SchemaPage";
 import { LogsPage } from "./LogsPage";
 import { SettingsPage } from "./SettingsPage";
@@ -97,7 +96,6 @@ export function Dashboard({ onLogout, onOpenProject }: Props) {
             </>
           )}
 
-          {page === "credentials" && <CredentialsPanel />}
           {page === "logs" && <LogsPage />}
           {page === "schema" && <SchemaPage />}
           {page === "settings" && <SettingsPage />}

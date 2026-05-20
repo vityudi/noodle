@@ -5,7 +5,8 @@ import { FlowCanvas } from "./FlowCanvas";
 import { NodePalette } from "./NodePalette";
 import { CreateFlowDialog } from "./CreateFlowDialog";
 import { TestPanel } from "./TestPanel";
-import { ChevronLeft, Save, Plus, Check, Play } from "lucide-react";
+import { CredentialsPanel } from "./CredentialsPanel";
+import { ChevronLeft, Save, Plus, Check, Play, KeyRound } from "lucide-react";
 
 interface Props {
   project: Project;
@@ -20,6 +21,7 @@ export function FlowBuilder({ project, onBack }: Props) {
   const [saved, setSaved] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
+  const [credsOpen, setCredsOpen] = useState(false);
 
   const { data: flows = [] } = useQuery({
     queryKey: ["flows", project.id],
@@ -82,9 +84,21 @@ export function FlowBuilder({ project, onBack }: Props) {
 
         <div className="flex-1" />
 
+        <button
+          onClick={() => { setCredsOpen((v) => !v); setTestOpen(false); }}
+          className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1 transition shrink-0 ${
+            credsOpen
+              ? "bg-zinc-800 border-zinc-600 text-zinc-100"
+              : "border-zinc-700 text-zinc-400 hover:text-zinc-100"
+          }`}
+        >
+          <KeyRound size={12} />
+          Credentials
+        </button>
+
         {selectedFlow && (
           <button
-            onClick={() => setTestOpen((v) => !v)}
+            onClick={() => { setTestOpen((v) => !v); setCredsOpen(false); }}
             className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1 transition shrink-0 ${
               testOpen
                 ? "bg-zinc-800 border-zinc-600 text-zinc-100"
@@ -135,6 +149,10 @@ export function FlowBuilder({ project, onBack }: Props) {
               Create your first flow
             </button>
           </div>
+        )}
+
+        {credsOpen && (
+          <CredentialsPanel project={project} onClose={() => setCredsOpen(false)} />
         )}
 
         {testOpen && selectedFlow && (
